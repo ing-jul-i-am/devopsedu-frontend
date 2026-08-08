@@ -5,3 +5,6 @@ coverage/
 .env.local
 *.local
 .DS_Store
+*:Zone.Identifier
+.claude/scheduled_tasks.lock
+.claude/worktrees/
