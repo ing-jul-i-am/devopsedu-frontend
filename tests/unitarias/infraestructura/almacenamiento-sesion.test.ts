@@ -49,4 +49,36 @@ describe("almacenamiento de sesion", () => {
     expect(obtenerToken()).toBeNull();
     expect(obtenerUsuario()).toBeNull();
   });
+
+  it("guarda la sesion en almacenamiento persistente por defecto (recordar sesion)", () => {
+    guardarSesion("token-persistente", {
+      idUsuario: 1,
+      nombre: "Estudiante de prueba",
+      correo: "estudiante@devopsedu.local",
+      fechaRegistro: "2026-08-07T00:00:00.000Z",
+      idRol: 1,
+    });
+
+    sessionStorage.clear();
+
+    expect(obtenerToken()).toBe("token-persistente");
+  });
+
+  it("mantiene la sesion solo en almacenamiento temporal cuando no se marca recordar sesion", () => {
+    guardarSesion(
+      "token-temporal",
+      {
+        idUsuario: 1,
+        nombre: "Estudiante de prueba",
+        correo: "estudiante@devopsedu.local",
+        fechaRegistro: "2026-08-07T00:00:00.000Z",
+        idRol: 1,
+      },
+      false
+    );
+
+    localStorage.clear();
+
+    expect(obtenerToken()).toBe("token-temporal");
+  });
 });
