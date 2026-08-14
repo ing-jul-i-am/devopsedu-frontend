@@ -8,13 +8,13 @@
 | --- | --- | --- |
 | Documentación base (`CLAUDE.md`, `.claude/skills`, documento de diseño, `docs/contrato-api.md`) | Completa | `db8818f` |
 | Etapa 0 — Scaffolding del proyecto | Completa | `0f54ff4` |
-| Etapa 1 — Módulo Sesión (login, registro, perfil) | Siguiente paso | — |
-| Etapa 2 — Módulo Servicios | Pendiente | — |
+| Etapa 1 — Módulo Sesión (login, registro, perfil) | Completa | `9b2a862` |
+| Etapa 2 — Módulo Servicios | Siguiente paso | — |
 | Etapa 3 — Módulo Monitoreo | Pendiente | — |
 | Etapa 4 — Módulo Aprendizaje | Pendiente (backend no implementado) | — |
 | Etapa 5 — Módulo Administración | Pendiente (backend no implementado) | — |
 
-**Próximo paso concreto:** Etapa 1 — vista "Iniciar sesión". Escribir primero la prueba (RED) para `src/modulos/sesion/paginas/iniciar-sesion.page.tsx` en `tests/unitarias/modulos/sesion/paginas/iniciar-sesion.page.test.tsx`, siguiendo `.claude/skills/ciclo-tdd` y `.claude/skills/nueva-vista-react`, antes de escribir el componente.
+**Próximo paso concreto:** Etapa 2 — Módulo Servicios. Empezar por el panel de servicios activos (RF-16, CU-08, `GET /api/servicios`): escribir primero la prueba (RED) para `src/modulos/servicios/paginas/panel-servicios.page.tsx` (o el nombre que se decida siguiendo la convención `<nombre>.page.tsx`), siguiendo `.claude/skills/ciclo-tdd` y `.claude/skills/nueva-vista-react`, antes de escribir el componente. Antes de empezar, registrar `GuardaRol` para las rutas de Servicios (roles `estudiante`/`docente`, ver `DT-01` sobre el id asumido de `docente`).
 
 ## Cómo retomar el trabajo en una sesión nueva
 
@@ -61,16 +61,19 @@ Dos bugs de configuración corregidos durante la verificación (documentados en 
 
 ---
 
-## Etapa 1 — Módulo Sesión (RF-01 a RF-04, CU-01, CU-02) — SIGUIENTE PASO
+## Etapa 1 — Módulo Sesión (RF-01 a RF-04, CU-01, CU-02) — COMPLETA (`9b2a862`)
 
 Grupo de API: `/api/auth` (contrato sección 2), sin autenticación previa requerida en ninguna de sus 3 rutas.
 
-- [ ] **Iniciar sesión** (`src/modulos/sesion/paginas/iniciar-sesion.page.tsx`) — `POST /api/auth/login`. Body `{ correo, contrasena }`. Éxito `200` → `{ token, usuario }` (sin anidar bajo otra clave). Error `401` `CredencialesInvalidasError` (mensaje genérico, no distingue correo inexistente de contraseña incorrecta). Campos del mockup Vista 01: correo institucional, contraseña, "recordar sesión", enlace a registro.
-- [ ] **Registro** (`src/modulos/sesion/paginas/registro.page.tsx`) — `POST /api/auth/registro`. Body `{ nombre (2-120), correo (email, ≤160), contrasena (8-128) }`. **Sin campo de rol** (ver `DT-01`). Éxito `201` → `{ usuario: { idUsuario, nombre, correo, fechaRegistro, idRol } }`. Errores: `400` (validación, usar `detalles` para mapear a campos), `409` `CorreoYaRegistradoError`, `500` genérico.
-- [ ] **Perfil / cerrar sesión** (`src/modulos/sesion/paginas/perfil.page.tsx`) — `POST /api/auth/logout` (sin cuerpo, `200` → `{ mensaje: "Sesion cerrada" }`, idempotente incluso sin token). **RF-04 (edición de perfil) no tiene endpoint implementado todavía** (`PUT /api/usuarios/*` pendiente según sección 6 del contrato) — esta vista se limita a mostrar los datos de `usuario` ya disponibles en la sesión y el botón de cerrar sesión. Registrar esta limitación como `DT-02` en `docs/decisiones-tecnicas.md` al implementarla.
-- [ ] Completar `GuardaAutenticacion` en `src/enrutamiento/rutas.tsx` registrando las rutas de Sesión y protegiendo el resto de módulos.
-- [ ] Agregar los handlers de MSW correspondientes en `tests/mocks/handlers.ts` (o archivo dedicado importado desde ahí) para `/api/auth/login`, `/api/auth/registro`, `/api/auth/logout`.
-- [ ] Verificar manualmente con `npm run dev` contra el backend real si está disponible en `http://localhost:3000`.
+- [x] **Iniciar sesión** (`src/modulos/sesion/paginas/iniciar-sesion.page.tsx` + `src/modulos/sesion/hooks/use-iniciar-sesion.ts`) — `POST /api/auth/login`. Campos del mockup Vista 01: correo institucional, contraseña, "recordar sesión" (con efecto real en el almacenamiento, ver `DT-02`), enlace a registro. Validación con Zod + React Hook Form (`mode: onBlur`, `reValidateMode: onChange`). Error `401` mostrado como mensaje genérico bajo el formulario.
+- [x] **Registro** (`src/modulos/sesion/paginas/registro.page.tsx` + `src/modulos/sesion/hooks/use-registro.ts`) — `POST /api/auth/registro`. **Sin campo de rol** (ver `DT-01`). Éxito `201` muestra una confirmación con enlace a iniciar sesión (el backend no emite token en el registro). Errores `400` mapeados campo por campo vía `detalles`, `409` (correo ya registrado) mostrado como mensaje genérico.
+- [x] **Perfil / cerrar sesión** (`src/modulos/sesion/paginas/perfil.page.tsx` + `src/modulos/sesion/hooks/use-cerrar-sesion.ts`) — `POST /api/auth/logout`. Solo muestra los datos de `usuario` ya disponibles en la sesión y el botón de cerrar sesión; RF-04 (edición) queda pendiente del backend, ver `DT-03`.
+- [x] `GuardaAutenticacion` registrado en `src/enrutamiento/rutas.tsx`: `/iniciar-sesion` y `/registro` públicas, `/perfil` protegida. `GuardaRol` se activará al proteger las rutas de Servicios en la Etapa 2.
+- [x] Handlers de MSW por defecto en `tests/mocks/handlers.ts` para `/api/auth/login`, `/api/auth/registro`, `/api/auth/logout` (los tests de casos particulares los sobrescriben con `servidorMock.use()`).
+- [x] Componentes comunes nuevos, requeridos por CLAUDE.md antes de construir formularios: `src/componentes-comunes/campo-texto.tsx`, `boton.tsx`, `casilla-verificacion.tsx`.
+- [x] `src/infraestructura/almacenamiento-sesion.ts` extendido con el parámetro `persistente` (ver `DT-02`).
+- [x] Verificación: `npm test` (47 pruebas unitarias + integración), `npm run test:coverage` (100% líneas/funciones/statements, 97% ramas), `npm run build`, `npm run lint` — todo en verde.
+- [ ] Verificación manual con `npm run dev` contra el backend real en `http://localhost:3000` — pendiente de que el usuario la ejecute con el backend levantado (no disponible en este entorno de trabajo).
 
 ---
 
@@ -88,14 +91,14 @@ Grupo de API: `/api/servicios` (contrato sección 3) — todas las rutas requier
 
 ## Etapa 3 — Módulo Monitoreo (RF-15, RF-18, RF-19, CU-09) — PENDIENTE
 
-- [ ] Decidir y documentar como `DT-03` la arquitectura de "Histórico de operaciones" (RF-15, CU-09): no existe `GET /api/historico` global, solo `registros` anidados en `GET /api/servicios/:idServicio`. Confirmar con el usuario si se compone desde múltiples llamadas o se reutiliza la sección ya presente en el Detalle de servicio de la Etapa 2.
+- [ ] Decidir y documentar como `DT-04` la arquitectura de "Histórico de operaciones" (RF-15, CU-09): no existe `GET /api/historico` global, solo `registros` anidados en `GET /api/servicios/:idServicio`. Confirmar con el usuario si se compone desde múltiples llamadas o se reutiliza la sección ya presente en el Detalle de servicio de la Etapa 2.
 - [ ] **Gráficas de métricas** — RF-18, RF-19. `GET /api/servicios/:idServicio/metricas` con `desde`/`hasta` opcionales. Contemplar en `errores-api.ts` la tercera forma de error (`400` de query sin `detalles`). Sin WebSockets: usar `refetchInterval` de TanStack Query para la actualización automática.
 
 ---
 
 ## Etapa 4 — Módulo Aprendizaje (RF-22 a RF-24, CU-12 a CU-14) — PENDIENTE (backend no implementado)
 
-El backend no implementa todavía `/api/aprendizaje/*` (sección 6 del contrato). Construir contra mocks de MSW, documentando el contrato asumido como `DT-04`, sin considerar la integración completa hasta que el backend entregue el grupo.
+El backend no implementa todavía `/api/aprendizaje/*` (sección 6 del contrato). Construir contra mocks de MSW, documentando el contrato asumido como `DT-05`, sin considerar la integración completa hasta que el backend entregue el grupo.
 
 - [ ] **Mi ruta** — RF-22, CU-13.
 - [ ] **Actividad** — RF-23, CU-12.
@@ -105,7 +108,7 @@ El backend no implementa todavía `/api/aprendizaje/*` (sección 6 del contrato)
 
 ## Etapa 5 — Módulo Administración (RF-20, RF-21, RF-25, RF-26, CU-10, CU-11, CU-15, CU-16) — PENDIENTE (backend no implementado)
 
-El backend no implementa todavía `/api/modulos`, `/api/rutas`, `/api/reportes`. Mismo tratamiento que la Etapa 4, contrato asumido documentado como `DT-05`.
+El backend no implementa todavía `/api/modulos`, `/api/rutas`, `/api/reportes`. Mismo tratamiento que la Etapa 4, contrato asumido documentado como `DT-06`.
 
 - [ ] **Gestión de módulos** — RF-20, CU-10.
 - [ ] **Asignación de rutas** — RF-21, CU-11.
