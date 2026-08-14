@@ -9,12 +9,12 @@
 | Documentación base (`CLAUDE.md`, `.claude/skills`, documento de diseño, `docs/contrato-api.md`) | Completa | `db8818f` |
 | Etapa 0 — Scaffolding del proyecto | Completa | `0f54ff4` |
 | Etapa 1 — Módulo Sesión (login, registro, perfil) | Completa | `9b2a862` |
-| Etapa 2 — Módulo Servicios | Siguiente paso | — |
-| Etapa 3 — Módulo Monitoreo | Pendiente | — |
+| Etapa 2 — Módulo Servicios | Completa | `83ffcd4` |
+| Etapa 3 — Módulo Monitoreo | Siguiente paso | — |
 | Etapa 4 — Módulo Aprendizaje | Pendiente (backend no implementado) | — |
 | Etapa 5 — Módulo Administración | Pendiente (backend no implementado) | — |
 
-**Próximo paso concreto:** Etapa 2 — Módulo Servicios. Empezar por el panel de servicios activos (RF-16, CU-08, `GET /api/servicios`): escribir primero la prueba (RED) para `src/modulos/servicios/paginas/panel-servicios.page.tsx` (o el nombre que se decida siguiendo la convención `<nombre>.page.tsx`), siguiendo `.claude/skills/ciclo-tdd` y `.claude/skills/nueva-vista-react`, antes de escribir el componente. Antes de empezar, registrar `GuardaRol` para las rutas de Servicios (roles `estudiante`/`docente`, ver `DT-01` sobre el id asumido de `docente`).
+**Próximo paso concreto:** Etapa 3 — Módulo Monitoreo. Primero decidir y documentar como `DT-05` la arquitectura del "Histórico de operaciones" (RF-15, CU-09; ver la nota en la sección de la Etapa 3 más abajo — es muy probable que se resuelva reutilizando la sección de histórico ya construida en `detalle-servicio.page.tsx` de la Etapa 2). Luego, escribir primero la prueba (RED) para las gráficas de métricas (RF-18, RF-19, `GET /api/servicios/:idServicio/metricas`), siguiendo `.claude/skills/ciclo-tdd` y `.claude/skills/nueva-vista-react`, antes de escribir el componente. Recharts (ya en `package.json`) es la biblioteca de gráficas definida en `CLAUDE.md`.
 
 ## Cómo retomar el trabajo en una sesión nueva
 
@@ -77,28 +77,33 @@ Grupo de API: `/api/auth` (contrato sección 2), sin autenticación previa reque
 
 ---
 
-## Etapa 2 — Módulo Servicios (RF-05 a RF-09, RF-11 a RF-14, RF-16 a RF-18, CU-03, CU-05, CU-06) — PENDIENTE
+## Etapa 2 — Módulo Servicios (RF-05 a RF-09, RF-11 a RF-14, RF-16 a RF-18, CU-03, CU-05, CU-06) — COMPLETA (`83ffcd4`)
 
 Grupo de API: `/api/servicios` (contrato sección 3) — todas las rutas requieren `Bearer` + rol `estudiante` o `docente`; los recursos son siempre del usuario autenticado (acceder a un servicio ajeno responde `404`).
 
-- [ ] **Panel de servicios activos** — RF-16, CU-08. `GET /api/servicios`.
-- [ ] **Crear servicio (asistente)** — RF-05, RF-06, RF-09, CU-03. `GET /api/servicios/imagenes` (catálogo RF-07) + `POST /api/servicios` con los límites exactos de la sección 3.5 del contrato. Manejar `422 RecursosInsuficientesError` mostrando `solicitado` vs. `disponible` (usar `errores-api.ts`).
-- [ ] **Detalle de servicio** — RF-17, RF-12 a RF-14, CU-05, CU-06. `GET /api/servicios/:idServicio` (incluye `registros`). Acciones `POST /:id/desplegar|detener|reiniciar`, `DELETE /:id` (con diálogo de confirmación, RNF-04). Deshabilitar en la UI las acciones no válidas según la tabla de transiciones de la sección 3.9 del contrato, en vez de esperar el `409`.
-- [ ] **Capacidad del servidor** — RF-10, CU-04. `GET /api/servidor/capacidad`.
-- [ ] Componentes reutilizables en `componentes-comunes/`: badge de estado (7 valores: `configurado, desplegando, en_ejecucion, detenido, reiniciando, fallido, eliminado`), diálogo de confirmación destructiva, medidor de capacidad.
+- [x] **Panel de servicios activos** (`src/modulos/servicios/paginas/panel-servicios.page.tsx`, ruta `/servicios`) — RF-16, CU-08. `GET /api/servicios`. Usa `TarjetaServicio` (nueva, `src/modulos/servicios/componentes/`) con `InsigniaEstado`. Estados de carga, vacío y error cubiertos.
+- [x] **Crear servicio (asistente)** (`crear-servicio.page.tsx`, ruta `/servicios/nuevo`) — RF-05, RF-06, RF-07, RF-09, CU-03. `GET /api/servicios/imagenes` sugerido vía `<datalist>` (el usuario puede escribir otra imagen) + `POST /api/servicios`. Errores `422 RecursosInsuficientesError` muestran `solicitado` vs. `disponible`; `400` mapeado campo por campo. **No expone edición de puertos, variables de entorno ni volúmenes** (se envían vacíos, válido según el contrato) — ver `DT-04`. Redirige al detalle del servicio creado.
+- [x] **Detalle de servicio** (`detalle-servicio.page.tsx`, ruta `/servicios/:idServicio`) — RF-17, RF-12 a RF-14, RNF-04, CU-05, CU-06. `GET /api/servicios/:idServicio` (incluye `registros`, listados como histórico). Acciones desplegar/detener/reiniciar y `BotonAccionCritica` (nuevo, con diálogo Radix) para eliminar. Los botones se **deshabilitan** según `ESTADOS_ORIGEN_VALIDOS` (`src/tipos/servicio.ts`, tabla de la sección 3.9 del contrato) en vez de esperar el `409`.
+- [x] **Capacidad del servidor** (`capacidad-servidor.page.tsx`, ruta `/capacidad-servidor`) — RF-10, CU-04. `GET /api/servidor/capacidad`. Solo requiere autenticación, sin `GuardaRol` (el contrato no restringe por rol este endpoint). Usa `MedidorCapacidad` (nuevo, elemento `<progress>` nativo).
+- [x] Componentes comunes nuevos: `insignia-estado.tsx` (7 estados), `medidor-capacidad.tsx`, `boton-accion-critica.tsx` (diálogo de confirmación destructiva con Radix Dialog); se agregó la variante `peligro` a `boton.tsx`.
+- [x] `GuardaRol` activado en `src/enrutamiento/rutas.tsx` para `/servicios`, `/servicios/nuevo` y `/servicios/:idServicio` (roles `estudiante`/`docente`, ver `DT-01`).
+- [x] Handlers de MSW por defecto en `tests/mocks/handlers.ts` para `/api/servicios`, `/api/servicios/imagenes`, `/api/servicios/:idServicio` (+ acciones), `/api/servidor/capacidad`.
+- [x] `tests/ayudas/renderizar-con-proveedores.tsx` extendido con la opción `rutaPatron`, necesaria para probar páginas que leen `useParams` (ninguna vista de la Etapa 1 lo necesitaba).
+- [x] Verificación: `npm test` (78 pruebas unitarias + integración), `npm run test:coverage` (99% líneas/statements, 93% ramas, 97% funciones), `npm run build`, `npm run lint` — todo en verde.
+- [ ] Verificación manual con `npm run dev` contra el backend real — pendiente de que el usuario la ejecute con el backend levantado.
 
 ---
 
 ## Etapa 3 — Módulo Monitoreo (RF-15, RF-18, RF-19, CU-09) — PENDIENTE
 
-- [ ] Decidir y documentar como `DT-04` la arquitectura de "Histórico de operaciones" (RF-15, CU-09): no existe `GET /api/historico` global, solo `registros` anidados en `GET /api/servicios/:idServicio`. Confirmar con el usuario si se compone desde múltiples llamadas o se reutiliza la sección ya presente en el Detalle de servicio de la Etapa 2.
+- [ ] Decidir y documentar como `DT-05` la arquitectura de "Histórico de operaciones" (RF-15, CU-09): no existe `GET /api/historico` global, solo `registros` anidados en `GET /api/servicios/:idServicio`. Confirmar con el usuario si se compone desde múltiples llamadas o se reutiliza la sección ya presente en el Detalle de servicio de la Etapa 2 (`detalle-servicio.page.tsx`, sección "Histórico de operaciones").
 - [ ] **Gráficas de métricas** — RF-18, RF-19. `GET /api/servicios/:idServicio/metricas` con `desde`/`hasta` opcionales. Contemplar en `errores-api.ts` la tercera forma de error (`400` de query sin `detalles`). Sin WebSockets: usar `refetchInterval` de TanStack Query para la actualización automática.
 
 ---
 
 ## Etapa 4 — Módulo Aprendizaje (RF-22 a RF-24, CU-12 a CU-14) — PENDIENTE (backend no implementado)
 
-El backend no implementa todavía `/api/aprendizaje/*` (sección 6 del contrato). Construir contra mocks de MSW, documentando el contrato asumido como `DT-05`, sin considerar la integración completa hasta que el backend entregue el grupo.
+El backend no implementa todavía `/api/aprendizaje/*` (sección 6 del contrato). Construir contra mocks de MSW, documentando el contrato asumido como `DT-06`, sin considerar la integración completa hasta que el backend entregue el grupo.
 
 - [ ] **Mi ruta** — RF-22, CU-13.
 - [ ] **Actividad** — RF-23, CU-12.
@@ -108,7 +113,7 @@ El backend no implementa todavía `/api/aprendizaje/*` (sección 6 del contrato)
 
 ## Etapa 5 — Módulo Administración (RF-20, RF-21, RF-25, RF-26, CU-10, CU-11, CU-15, CU-16) — PENDIENTE (backend no implementado)
 
-El backend no implementa todavía `/api/modulos`, `/api/rutas`, `/api/reportes`. Mismo tratamiento que la Etapa 4, contrato asumido documentado como `DT-06`.
+El backend no implementa todavía `/api/modulos`, `/api/rutas`, `/api/reportes`. Mismo tratamiento que la Etapa 4, contrato asumido documentado como `DT-07`.
 
 - [ ] **Gestión de módulos** — RF-20, CU-10.
 - [ ] **Asignación de rutas** — RF-21, CU-11.
