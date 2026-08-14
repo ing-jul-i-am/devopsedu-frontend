@@ -19,4 +19,10 @@ describe("Boton", () => {
     expect(boton).toBeDisabled();
     expect(boton).toHaveTextContent(/procesando/i);
   });
+
+  it("aplica el color de advertencia cuando la variante es peligro", () => {
+    render(<Boton variante="peligro">Eliminar</Boton>);
+
+    expect(screen.getByRole("button", { name: "Eliminar" })).toHaveClass("bg-peligro");
+  });
 });
