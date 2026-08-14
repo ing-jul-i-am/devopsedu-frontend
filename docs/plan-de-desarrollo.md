@@ -73,7 +73,7 @@ Grupo de API: `/api/auth` (contrato sección 2), sin autenticación previa reque
 - [x] Componentes comunes nuevos, requeridos por CLAUDE.md antes de construir formularios: `src/componentes-comunes/campo-texto.tsx`, `boton.tsx`, `casilla-verificacion.tsx`.
 - [x] `src/infraestructura/almacenamiento-sesion.ts` extendido con el parámetro `persistente` (ver `DT-02`).
 - [x] Verificación: `npm test` (47 pruebas unitarias + integración), `npm run test:coverage` (100% líneas/funciones/statements, 97% ramas), `npm run build`, `npm run lint` — todo en verde.
-- [ ] Verificación manual con `npm run dev` contra el backend real en `http://localhost:3000` — pendiente de que el usuario la ejecute con el backend levantado (no disponible en este entorno de trabajo).
+- [x] Verificación manual con `npm run dev` contra el backend real en `http://localhost:3000`: login y registro confirmados por el usuario. Se detectó y corrigió en el backend un problema de CORS (no tenía el middleware configurado) que bloqueaba las peticiones del navegador; no requirió cambios en este repositorio, ya que el cliente HTTP ya apuntaba a la ruta correcta (`/api/auth/...`) según `docs/contrato-api.md`.
 
 ---
 
