@@ -25,7 +25,8 @@ describe("Flujo de perfil y cierre de sesion", () => {
     const usuarioInteraccion = userEvent.setup();
     renderizarConProveedores(<App />, { rutaInicial: "/perfil" });
 
-    expect(await screen.findByText("Julian Barrera")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /mi perfil/i })).toBeInTheDocument();
+    expect(screen.getAllByText("Julian Barrera").length).toBeGreaterThan(0);
 
     await usuarioInteraccion.click(screen.getByRole("button", { name: /cerrar sesion/i }));
 

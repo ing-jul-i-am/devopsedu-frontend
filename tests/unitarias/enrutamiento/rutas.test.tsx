@@ -6,6 +6,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { GuardaAutenticacion, GuardaRol, Rutas } from "@/enrutamiento/rutas";
+import { renderizarConProveedores } from "../../ayudas/renderizar-con-proveedores";
+import { crearUsuarioDePrueba } from "../../fixtures/usuario.factory";
 import { guardarSesion, limpiarSesion } from "@/infraestructura/almacenamiento-sesion";
 import { ID_ROL_DOCENTE, ID_ROL_ESTUDIANTE } from "@/tipos/roles";
 
@@ -102,13 +104,21 @@ describe("GuardaRol", () => {
 });
 
 describe("Rutas", () => {
-  it("muestra la pagina de inicio en la ruta raiz", () => {
-    render(
-      <MemoryRouter initialEntries={["/"]}>
-        <Rutas />
-      </MemoryRouter>
-    );
+  afterEach(() => {
+    limpiarSesion();
+  });
 
-    expect(screen.getByText("DevOpsEdu")).toBeInTheDocument();
+  it("redirige a inicio de sesion en la ruta raiz cuando no hay sesion activa", () => {
+    renderizarConProveedores(<Rutas />);
+
+    expect(screen.getByRole("heading", { name: /iniciar sesion/i })).toBeInTheDocument();
+  });
+
+  it("muestra el panel principal en la ruta raiz cuando hay sesion activa", () => {
+    guardarSesion("token-de-prueba", crearUsuarioDePrueba());
+
+    renderizarConProveedores(<Rutas />);
+
+    expect(screen.getByRole("heading", { name: /bienvenido/i })).toBeInTheDocument();
   });
 });
