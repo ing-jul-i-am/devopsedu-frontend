@@ -1,11 +1,12 @@
 /**
- * Cubre: RF-02, RF-04 — proteccion de rutas segun sesion activa (GuardaAutenticacion)
- * y segun rol del usuario (GuardaRol).
+ * Cubre: RF-02, RF-04 — proteccion de rutas segun sesion activa (GuardaAutenticacion),
+ * segun rol del usuario (GuardaRol) y bloqueo de vistas de invitado con sesion
+ * activa (GuardaInvitado).
  */
 import { afterEach, describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { GuardaAutenticacion, GuardaRol, Rutas } from "@/enrutamiento/rutas";
+import { GuardaAutenticacion, GuardaInvitado, GuardaRol, Rutas } from "@/enrutamiento/rutas";
 import { renderizarConProveedores } from "../../ayudas/renderizar-con-proveedores";
 import { crearUsuarioDePrueba } from "../../fixtures/usuario.factory";
 import { guardarSesion, limpiarSesion } from "@/infraestructura/almacenamiento-sesion";
@@ -19,6 +20,19 @@ function renderizarConGuardaAutenticacion(rutaInicial: string) {
           <Route path="/protegida" element={<p>Contenido protegido</p>} />
         </Route>
         <Route path="/iniciar-sesion" element={<p>Formulario de inicio de sesion</p>} />
+      </Routes>
+    </MemoryRouter>
+  );
+}
+
+function renderizarConGuardaInvitado(rutaInicial: string) {
+  return render(
+    <MemoryRouter initialEntries={[rutaInicial]}>
+      <Routes>
+        <Route element={<GuardaInvitado />}>
+          <Route path="/iniciar-sesion" element={<p>Formulario de inicio de sesion</p>} />
+        </Route>
+        <Route path="/" element={<p>Panel principal</p>} />
       </Routes>
     </MemoryRouter>
   );
@@ -60,6 +74,26 @@ describe("GuardaAutenticacion", () => {
     renderizarConGuardaAutenticacion("/protegida");
 
     expect(screen.getByText(/contenido protegido/i)).toBeInTheDocument();
+  });
+});
+
+describe("GuardaInvitado", () => {
+  afterEach(() => {
+    limpiarSesion();
+  });
+
+  it("muestra el contenido cuando no hay sesion activa", () => {
+    renderizarConGuardaInvitado("/iniciar-sesion");
+
+    expect(screen.getByText(/formulario de inicio de sesion/i)).toBeInTheDocument();
+  });
+
+  it("redirige a la ruta raiz cuando ya existe una sesion activa", () => {
+    guardarSesion("token-de-prueba", crearUsuarioDePrueba());
+
+    renderizarConGuardaInvitado("/iniciar-sesion");
+
+    expect(screen.getByText(/panel principal/i)).toBeInTheDocument();
   });
 });
 
@@ -118,6 +152,22 @@ describe("Rutas", () => {
     guardarSesion("token-de-prueba", crearUsuarioDePrueba());
 
     renderizarConProveedores(<Rutas />);
+
+    expect(screen.getByRole("heading", { name: /bienvenido/i })).toBeInTheDocument();
+  });
+
+  it("redirige al panel principal cuando se visita iniciar sesion con una sesion activa", () => {
+    guardarSesion("token-de-prueba", crearUsuarioDePrueba());
+
+    renderizarConProveedores(<Rutas />, { rutaInicial: "/iniciar-sesion" });
+
+    expect(screen.getByRole("heading", { name: /bienvenido/i })).toBeInTheDocument();
+  });
+
+  it("redirige al panel principal cuando se visita registro con una sesion activa", () => {
+    guardarSesion("token-de-prueba", crearUsuarioDePrueba());
+
+    renderizarConProveedores(<Rutas />, { rutaInicial: "/registro" });
 
     expect(screen.getByRole("heading", { name: /bienvenido/i })).toBeInTheDocument();
   });

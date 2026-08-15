@@ -21,6 +21,13 @@ export function GuardaAutenticacion() {
   return <Outlet />;
 }
 
+export function GuardaInvitado() {
+  if (obtenerToken()) {
+    return <Navigate to="/" replace />;
+  }
+  return <Outlet />;
+}
+
 export function GuardaRol({ rolesPermitidos }: { rolesPermitidos: number[] }) {
   const usuario = obtenerUsuario();
   if (!usuario || !rolesPermitidos.includes(usuario.idRol)) {
@@ -34,8 +41,10 @@ const ROLES_SERVICIOS = [ID_ROL_ESTUDIANTE, ID_ROL_DOCENTE];
 export function Rutas() {
   return (
     <Routes>
-      <Route path="/iniciar-sesion" element={<IniciarSesionPage />} />
-      <Route path="/registro" element={<RegistroPage />} />
+      <Route element={<GuardaInvitado />}>
+        <Route path="/iniciar-sesion" element={<IniciarSesionPage />} />
+        <Route path="/registro" element={<RegistroPage />} />
+      </Route>
       <Route element={<GuardaAutenticacion />}>
         <Route element={<DisenoAutenticado />}>
           <Route path="/" element={<PanelPrincipalPage />} />
