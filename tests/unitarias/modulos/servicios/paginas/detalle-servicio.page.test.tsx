@@ -115,6 +115,29 @@ describe("DetalleServicioPage", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
+  it("habilita Reiniciar cuando el servicio esta en estado fallido", async () => {
+    const usuario = userEvent.setup();
+    const servicio = crearServicioDetalleDePrueba({ idServicio: 7, estado: "fallido" });
+    servidorMock.use(
+      http.get(rutaServicio(7), () => HttpResponse.json(servicio)),
+      http.post(`${rutaServicio(7)}/reiniciar`, () =>
+        HttpResponse.json({ idServicio: 7, nombre: servicio.nombre, estado: "en_ejecucion" })
+      )
+    );
+
+    renderizarConProveedores(<DetalleServicioPage />, {
+      rutaInicial: "/servicios/7",
+      rutaPatron: RUTA_PATRON,
+    });
+
+    const botonReiniciar = await screen.findByRole("button", { name: /^reiniciar$/i });
+    expect(botonReiniciar).toBeEnabled();
+
+    await usuario.click(botonReiniciar);
+
+    await waitFor(() => expect(screen.getByRole("button", { name: /^reiniciar$/i })).toBeEnabled());
+  });
+
   it("elimina el servicio tras confirmar en el dialogo", async () => {
     const usuario = userEvent.setup();
     const servicio = crearServicioDetalleDePrueba({ idServicio: 7, estado: "detenido" });

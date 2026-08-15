@@ -391,7 +391,7 @@ RF-11 a RF-14 — CU-05. Ninguna de estas rutas recibe cuerpo. Todas responden
 | --- | --- | --- | --- |
 | `POST /api/servicios/:idServicio/desplegar` | RF-11 | `configurado`, `detenido`, `fallido` | `en_ejecucion` |
 | `POST /api/servicios/:idServicio/detener` | RF-12 | `en_ejecucion` | `detenido` |
-| `POST /api/servicios/:idServicio/reiniciar` | RF-13 | `detenido`, `en_ejecucion` | `en_ejecucion` |
+| `POST /api/servicios/:idServicio/reiniciar` | RF-13 | `detenido`, `en_ejecucion`, `fallido` | `en_ejecucion` |
 | `DELETE /api/servicios/:idServicio` | RF-14 | `configurado`, `desplegando`, `en_ejecucion`, `detenido`, `reiniciando`, `fallido` | `eliminado` (eliminacion logica; el registro se conserva) |
 
 `desplegar` ademas verifica disponibilidad de recursos (RF-09) antes de invocar a

@@ -79,6 +79,6 @@ export interface CapacidadServidor {
 export const ESTADOS_ORIGEN_VALIDOS: Record<"desplegar" | "detener" | "reiniciar" | "eliminar", EstadoServicio[]> = {
   desplegar: ["configurado", "detenido", "fallido"],
   detener: ["en_ejecucion"],
-  reiniciar: ["detenido", "en_ejecucion"],
+  reiniciar: ["detenido", "en_ejecucion", "fallido"],
   eliminar: ["configurado", "desplegando", "en_ejecucion", "detenido", "reiniciando", "fallido"],
 };
