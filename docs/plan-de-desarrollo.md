@@ -10,11 +10,12 @@
 | Etapa 0 — Scaffolding del proyecto | Completa | `0f54ff4` |
 | Etapa 1 — Módulo Sesión (login, registro, perfil) | Completa | `9b2a862` |
 | Etapa 2 — Módulo Servicios | Completa | `83ffcd4` |
+| Mejora transversal — Navegación y panel principal (RNF-03) | Completa | `dec4ebc` |
 | Etapa 3 — Módulo Monitoreo | Siguiente paso | — |
 | Etapa 4 — Módulo Aprendizaje | Pendiente (backend no implementado) | — |
 | Etapa 5 — Módulo Administración | Pendiente (backend no implementado) | — |
 
-**Próximo paso concreto:** Etapa 3 — Módulo Monitoreo. Primero decidir y documentar como `DT-05` la arquitectura del "Histórico de operaciones" (RF-15, CU-09; ver la nota en la sección de la Etapa 3 más abajo — es muy probable que se resuelva reutilizando la sección de histórico ya construida en `detalle-servicio.page.tsx` de la Etapa 2). Luego, escribir primero la prueba (RED) para las gráficas de métricas (RF-18, RF-19, `GET /api/servicios/:idServicio/metricas`), siguiendo `.claude/skills/ciclo-tdd` y `.claude/skills/nueva-vista-react`, antes de escribir el componente. Recharts (ya en `package.json`) es la biblioteca de gráficas definida en `CLAUDE.md`.
+**Próximo paso concreto:** Etapa 3 — Módulo Monitoreo. Primero decidir y documentar como `DT-06` la arquitectura del "Histórico de operaciones" (RF-15, CU-09; ver la nota en la sección de la Etapa 3 más abajo — es muy probable que se resuelva reutilizando la sección de histórico ya construida en `detalle-servicio.page.tsx` de la Etapa 2). Luego, escribir primero la prueba (RED) para las gráficas de métricas (RF-18, RF-19, `GET /api/servicios/:idServicio/metricas`), siguiendo `.claude/skills/ciclo-tdd` y `.claude/skills/nueva-vista-react`, antes de escribir el componente. Recharts (ya en `package.json`) es la biblioteca de gráficas definida en `CLAUDE.md`. La vista de gráficas de métricas debe registrarse dentro del bloque `DisenoAutenticado` en `rutas.tsx` (ver la mejora transversal de navegación) y agregarse a la lista `ENLACES` de `src/componentes-comunes/barra-navegacion.tsx` para que aparezca en el menú lateral.
 
 ## Cómo retomar el trabajo en una sesión nueva
 
@@ -90,20 +91,35 @@ Grupo de API: `/api/servicios` (contrato sección 3) — todas las rutas requier
 - [x] Handlers de MSW por defecto en `tests/mocks/handlers.ts` para `/api/servicios`, `/api/servicios/imagenes`, `/api/servicios/:idServicio` (+ acciones), `/api/servidor/capacidad`.
 - [x] `tests/ayudas/renderizar-con-proveedores.tsx` extendido con la opción `rutaPatron`, necesaria para probar páginas que leen `useParams` (ninguna vista de la Etapa 1 lo necesitaba).
 - [x] Verificación: `npm test` (78 pruebas unitarias + integración), `npm run test:coverage` (99% líneas/statements, 93% ramas, 97% funciones), `npm run build`, `npm run lint` — todo en verde.
-- [ ] Verificación manual con `npm run dev` contra el backend real — pendiente de que el usuario la ejecute con el backend levantado.
+- [x] Verificación manual con `npm run dev` contra el backend real: panel de servicios, detalle (con histórico e imagen no disponible mostrando el error real del backend), crear servicio y capacidad del servidor confirmados por el usuario con capturas de pantalla.
+
+---
+
+## Mejora transversal — Navegación y panel principal (RNF-03) — COMPLETA (`dec4ebc`)
+
+No es una etapa del plan original: se agregó tras la verificación manual de la Etapa 2, cuando el usuario notó que las vistas autenticadas no tenían ninguna forma de navegar entre ellas. El documento de diseño técnico ya lo definía (ver `DT-05` en `docs/decisiones-tecnicas.md`), pero no se había convertido en tarea explícita del plan.
+
+- [x] `src/componentes-comunes/barra-navegacion.tsx` (`BarraNavegacion`) — barra superior (marca + usuario autenticado) y menú lateral con `NavLink`, resaltando la sección activa vía `aria-current="page"`.
+- [x] `src/enrutamiento/diseno-autenticado.tsx` (`DisenoAutenticado`) — compone `BarraNavegacion` con `<Outlet/>`; anidado dentro de `GuardaAutenticacion` en `rutas.tsx`, envuelve **todas** las rutas autenticadas.
+- [x] `src/modulos/principal/paginas/panel-principal.page.tsx` (`PanelPrincipalPage`) — hub principal en la ruta raíz `/`, que pasó de pública a protegida por `GuardaAutenticacion`. Saluda al usuario y ofrece accesos rápidos a Mis servicios, Crear servicio y Capacidad del servidor.
+- [x] `rutas.tsx` reestructurado: `/`, `/perfil`, `/capacidad-servidor` y el bloque de `/servicios/*` (con `GuardaRol`) ahora viven anidados bajo `DisenoAutenticado`.
+- [x] Pruebas existentes actualizadas por el cambio de comportamiento de `/` (ahora protegida): `tests/unitarias/app/app.test.tsx`, `tests/unitarias/enrutamiento/rutas.test.tsx`, `tests/integracion/modulos/sesion/flujo-perfil-y-logout.test.tsx`.
+- [x] Verificación: `npm test` (88 pruebas unitarias + integración), `npm run test:coverage` (99% líneas/statements, 92% ramas, 97% funciones), `npm run build`, `npm run lint` — todo en verde.
+
+El menú lateral (`ENLACES` en `barra-navegacion.tsx`) solo enlaza a las áreas ya implementadas. Cada etapa nueva que agregue una vista autenticada debe: (1) registrarla dentro del bloque `DisenoAutenticado` en `rutas.tsx`, y (2) agregar su entrada a `ENLACES` para que aparezca en el menú lateral.
 
 ---
 
 ## Etapa 3 — Módulo Monitoreo (RF-15, RF-18, RF-19, CU-09) — PENDIENTE
 
-- [ ] Decidir y documentar como `DT-05` la arquitectura de "Histórico de operaciones" (RF-15, CU-09): no existe `GET /api/historico` global, solo `registros` anidados en `GET /api/servicios/:idServicio`. Confirmar con el usuario si se compone desde múltiples llamadas o se reutiliza la sección ya presente en el Detalle de servicio de la Etapa 2 (`detalle-servicio.page.tsx`, sección "Histórico de operaciones").
+- [ ] Decidir y documentar como `DT-06` la arquitectura de "Histórico de operaciones" (RF-15, CU-09): no existe `GET /api/historico` global, solo `registros` anidados en `GET /api/servicios/:idServicio`. Confirmar con el usuario si se compone desde múltiples llamadas o se reutiliza la sección ya presente en el Detalle de servicio de la Etapa 2 (`detalle-servicio.page.tsx`, sección "Histórico de operaciones").
 - [ ] **Gráficas de métricas** — RF-18, RF-19. `GET /api/servicios/:idServicio/metricas` con `desde`/`hasta` opcionales. Contemplar en `errores-api.ts` la tercera forma de error (`400` de query sin `detalles`). Sin WebSockets: usar `refetchInterval` de TanStack Query para la actualización automática.
 
 ---
 
 ## Etapa 4 — Módulo Aprendizaje (RF-22 a RF-24, CU-12 a CU-14) — PENDIENTE (backend no implementado)
 
-El backend no implementa todavía `/api/aprendizaje/*` (sección 6 del contrato). Construir contra mocks de MSW, documentando el contrato asumido como `DT-06`, sin considerar la integración completa hasta que el backend entregue el grupo.
+El backend no implementa todavía `/api/aprendizaje/*` (sección 6 del contrato). Construir contra mocks de MSW, documentando el contrato asumido como `DT-07`, sin considerar la integración completa hasta que el backend entregue el grupo.
 
 - [ ] **Mi ruta** — RF-22, CU-13.
 - [ ] **Actividad** — RF-23, CU-12.
@@ -113,7 +129,7 @@ El backend no implementa todavía `/api/aprendizaje/*` (sección 6 del contrato)
 
 ## Etapa 5 — Módulo Administración (RF-20, RF-21, RF-25, RF-26, CU-10, CU-11, CU-15, CU-16) — PENDIENTE (backend no implementado)
 
-El backend no implementa todavía `/api/modulos`, `/api/rutas`, `/api/reportes`. Mismo tratamiento que la Etapa 4, contrato asumido documentado como `DT-07`.
+El backend no implementa todavía `/api/modulos`, `/api/rutas`, `/api/reportes`. Mismo tratamiento que la Etapa 4, contrato asumido documentado como `DT-08`.
 
 - [ ] **Gestión de módulos** — RF-20, CU-10.
 - [ ] **Asignación de rutas** — RF-21, CU-11.
