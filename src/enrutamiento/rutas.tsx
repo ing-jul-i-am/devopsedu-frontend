@@ -8,6 +8,8 @@ import { PanelServiciosPage } from "@/modulos/servicios/paginas/panel-servicios.
 import { CrearServicioPage } from "@/modulos/servicios/paginas/crear-servicio.page";
 import { DetalleServicioPage } from "@/modulos/servicios/paginas/detalle-servicio.page";
 import { CapacidadServidorPage } from "@/modulos/servicios/paginas/capacidad-servidor.page";
+import { HistoricoOperacionesPage } from "@/modulos/monitoreo/paginas/historico-operaciones.page";
+import { GraficasMetricasPage } from "@/modulos/monitoreo/paginas/graficas-metricas.page";
 import { DisenoAutenticado } from "./diseno-autenticado";
 import { ID_ROL_DOCENTE, ID_ROL_ESTUDIANTE } from "@/tipos/roles";
 
@@ -43,6 +45,8 @@ export function Rutas() {
             <Route path="/servicios" element={<PanelServiciosPage />} />
             <Route path="/servicios/nuevo" element={<CrearServicioPage />} />
             <Route path="/servicios/:idServicio" element={<DetalleServicioPage />} />
+            <Route path="/monitoreo/historico" element={<HistoricoOperacionesPage />} />
+            <Route path="/monitoreo/metricas" element={<GraficasMetricasPage />} />
           </Route>
         </Route>
       </Route>

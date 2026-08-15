@@ -46,6 +46,14 @@ describe("BarraNavegacion", () => {
       "/capacidad-servidor"
     );
     expect(screen.getByRole("link", { name: /perfil/i })).toHaveAttribute("href", "/perfil");
+    expect(screen.getByRole("link", { name: /^historico$/i })).toHaveAttribute(
+      "href",
+      "/monitoreo/historico"
+    );
+    expect(screen.getByRole("link", { name: /graficas de metricas/i })).toHaveAttribute(
+      "href",
+      "/monitoreo/metricas"
+    );
   });
 
   it("resalta el enlace de la seccion activa", () => {

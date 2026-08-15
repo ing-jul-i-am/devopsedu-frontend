@@ -10,6 +10,8 @@ const ENLACES = [
   { hacia: "/", etiqueta: "Panel principal", fin: true },
   { hacia: "/servicios", etiqueta: "Mis servicios", fin: false },
   { hacia: "/capacidad-servidor", etiqueta: "Capacidad del servidor", fin: false },
+  { hacia: "/monitoreo/historico", etiqueta: "Historico", fin: false },
+  { hacia: "/monitoreo/metricas", etiqueta: "Graficas de metricas", fin: false },
   { hacia: "/perfil", etiqueta: "Perfil", fin: false },
 ];
 

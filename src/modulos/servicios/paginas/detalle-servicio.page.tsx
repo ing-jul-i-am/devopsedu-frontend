@@ -6,6 +6,7 @@ import { InsigniaEstado } from "@/componentes-comunes/insignia-estado";
 import { Boton } from "@/componentes-comunes/boton";
 import { BotonAccionCritica } from "@/componentes-comunes/boton-accion-critica";
 import { ESTADOS_ORIGEN_VALIDOS } from "@/tipos/servicio";
+import { ListaRegistros } from "../componentes/lista-registros";
 import { useServicio } from "../hooks/use-servicio";
 import {
   useDesplegarServicio,
@@ -86,26 +87,7 @@ export function DetalleServicioPage() {
 
       <section className="flex flex-col gap-sm">
         <h2 className="text-lg font-medium text-texto">Historico de operaciones</h2>
-        {servicio.registros.length === 0 ? (
-          <p className="text-texto-secundario">Aun no hay operaciones registradas.</p>
-        ) : (
-          <ul className="flex flex-col gap-sm">
-            {servicio.registros.map((registro) => (
-              <li
-                key={registro.idRegistro}
-                className="rounded-md border border-borde p-sm text-sm text-texto"
-              >
-                <span className="font-medium">{registro.operacion}</span>{" "}
-                <span className="text-texto-secundario">
-                  ({registro.resultado}) — {new Date(registro.fechaHora).toLocaleString("es-GT")}
-                </span>
-                {registro.mensajeError ? (
-                  <p className="text-peligro">{registro.mensajeError}</p>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
+        <ListaRegistros registros={servicio.registros} />
       </section>
     </main>
   );

@@ -146,6 +146,18 @@ export const handlers: HttpHandler[] = [
     })
   ),
 
+  http.get(`${configuracion.prefijoApi}/servicios/:idServicio/metricas`, () =>
+    HttpResponse.json([
+      {
+        idMetrica: 1,
+        consumoCpu: 0.35,
+        consumoMemoria: 128,
+        estadoEjecucion: "en_ejecucion",
+        marcaTiempo: "2026-08-07T00:10:00.000Z",
+      },
+    ])
+  ),
+
   http.get(`${configuracion.prefijoApi}/servidor/capacidad`, () =>
     HttpResponse.json({
       total: { cpu: 8, memoria: 16384, almacenamiento: 512000 },
