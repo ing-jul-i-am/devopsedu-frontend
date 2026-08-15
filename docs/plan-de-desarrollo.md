@@ -11,11 +11,11 @@
 | Etapa 1 — Módulo Sesión (login, registro, perfil) | Completa | `9b2a862` |
 | Etapa 2 — Módulo Servicios | Completa | `83ffcd4` |
 | Mejora transversal — Navegación y panel principal (RNF-03) | Completa | `dec4ebc` |
-| Etapa 3 — Módulo Monitoreo | Siguiente paso | — |
-| Etapa 4 — Módulo Aprendizaje | Pendiente (backend no implementado) | — |
+| Etapa 3 — Módulo Monitoreo | Completa | `1e237f5` |
+| Etapa 4 — Módulo Aprendizaje | Siguiente paso (backend no implementado) | — |
 | Etapa 5 — Módulo Administración | Pendiente (backend no implementado) | — |
 
-**Próximo paso concreto:** Etapa 3 — Módulo Monitoreo. Primero decidir y documentar como `DT-06` la arquitectura del "Histórico de operaciones" (RF-15, CU-09; ver la nota en la sección de la Etapa 3 más abajo — es muy probable que se resuelva reutilizando la sección de histórico ya construida en `detalle-servicio.page.tsx` de la Etapa 2). Luego, escribir primero la prueba (RED) para las gráficas de métricas (RF-18, RF-19, `GET /api/servicios/:idServicio/metricas`), siguiendo `.claude/skills/ciclo-tdd` y `.claude/skills/nueva-vista-react`, antes de escribir el componente. Recharts (ya en `package.json`) es la biblioteca de gráficas definida en `CLAUDE.md`. La vista de gráficas de métricas debe registrarse dentro del bloque `DisenoAutenticado` en `rutas.tsx` (ver la mejora transversal de navegación) y agregarse a la lista `ENLACES` de `src/componentes-comunes/barra-navegacion.tsx` para que aparezca en el menú lateral.
+**Próximo paso concreto:** Etapa 4 — Módulo Aprendizaje. El backend **no implementa todavía** `/api/aprendizaje/*` (ver sección 6 de `docs/contrato-api.md`), así que antes de escribir código hay que decidir y documentar como `DT-07` el contrato asumido para `/api/aprendizaje/mi-ruta`, `/api/aprendizaje/actividades` y `/api/aprendizaje/evaluaciones` (o los nombres de endpoint que se definan), construyendo esta etapa contra mocks de MSW en vez de contra el backend real. Confirmar con el usuario el contrato asumido antes de implementar las 3 vistas (Mi ruta, Actividad, Evaluación). Cada vista nueva debe registrarse dentro de `DisenoAutenticado` en `rutas.tsx` y agregarse a `ENLACES` en `src/componentes-comunes/barra-navegacion.tsx`.
 
 ## Cómo retomar el trabajo en una sesión nueva
 
@@ -110,10 +110,18 @@ El menú lateral (`ENLACES` en `barra-navegacion.tsx`) solo enlaza a las áreas 
 
 ---
 
-## Etapa 3 — Módulo Monitoreo (RF-15, RF-18, RF-19, CU-09) — PENDIENTE
+## Etapa 3 — Módulo Monitoreo (RF-15, RF-18, RF-19, CU-09) — COMPLETA (`1e237f5`)
 
-- [ ] Decidir y documentar como `DT-06` la arquitectura de "Histórico de operaciones" (RF-15, CU-09): no existe `GET /api/historico` global, solo `registros` anidados en `GET /api/servicios/:idServicio`. Confirmar con el usuario si se compone desde múltiples llamadas o se reutiliza la sección ya presente en el Detalle de servicio de la Etapa 2 (`detalle-servicio.page.tsx`, sección "Histórico de operaciones").
-- [ ] **Gráficas de métricas** — RF-18, RF-19. `GET /api/servicios/:idServicio/metricas` con `desde`/`hasta` opcionales. Contemplar en `errores-api.ts` la tercera forma de error (`400` de query sin `detalles`). Sin WebSockets: usar `refetchInterval` de TanStack Query para la actualización automática.
+- [x] Decidido y documentado como `DT-06` (`docs/decisiones-tecnicas.md`): "Histórico de operaciones" usa un selector de servicio (no existe `GET /api/historico` global). El usuario eligió esta opción sobre un histórico global compuesto por N+1 peticiones y sobre no construir una vista separada.
+- [x] **Histórico de operaciones** (`src/modulos/monitoreo/paginas/historico-operaciones.page.tsx`, ruta `/monitoreo/historico`) — RF-15, CU-09. `CampoSelector` (nuevo componente común) con los servicios del usuario (`GET /api/servicios`); al elegir uno, `useServicio` trae su detalle y se reutiliza `ListaRegistros` (extraído de `detalle-servicio.page.tsx` a `src/modulos/servicios/componentes/lista-registros.tsx`, con su propia prueba — refactor sin cambio de comportamiento).
+- [x] **Gráficas de métricas** (`graficas-metricas.page.tsx`, ruta `/monitoreo/metricas`) — RF-18, RF-19, apoya CU-08. Mismo selector de servicio + `GET /api/servicios/:idServicio/metricas` (`use-metricas-servicio.ts`, con `refetchInterval: 5000` para actualización automática sin WebSockets, y `enabled` condicionado a tener un servicio elegido). Dos gráficas de línea independientes con Recharts (CPU y memoria), **no un solo eje compartido**: ambas magnitudes tienen escalas muy distintas (CPU 0-8 núcleos vs. memoria hasta 131072 MB) y combinarlas distorsionaría la lectura (ver skill `dataviz`, regla de "un solo eje"). Colores tomados de `src/diseno/tokens.ts` (`colores.primario`, `colores.exito`), no hex sueltos.
+- [x] `src/tipos/metrica.ts` (tipo `Metrica`, sin lógica — no requiere TDD).
+- [x] Enlaces "Histórico" y "Gráficas de métricas" agregados a `ENLACES` en `barra-navegacion.tsx`; rutas anidadas en `DisenoAutenticado` + `GuardaRol` (mismo grupo de roles que Servicios, ya que ambas vistas dependen de `GET /api/servicios`).
+- [x] Handler de MSW por defecto para `GET /api/servicios/:idServicio/metricas` en `tests/mocks/handlers.ts`.
+- [x] Verificación: `npm test` (104 pruebas unitarias + integración), `npm run test:coverage` (98% líneas/statements, 92% ramas, 92% funciones), `npm run build`, `npm run lint` — todo en verde.
+- [ ] Verificación manual con `npm run dev` contra el backend real — pendiente de que el usuario la ejecute.
+
+No se contempló la tercera forma de error de `errores-api.ts` (`400` de query sin `detalles`, sección 3.7 del contrato) porque esta etapa no expone filtros `desde`/`hasta` en la UI — la llamada a métricas se hace sin query params. Si se agregan filtros de rango de fechas más adelante, ese caso de error debe cubrirse entonces.
 
 ---
 
