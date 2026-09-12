@@ -32,6 +32,28 @@ describe("ListaRegistros", () => {
     expect(item).toHaveTextContent(/exito/i);
   });
 
+  it("muestra una etiqueta clara para un registro generado automaticamente por el monitor (RF-19)", () => {
+    render(
+      <ListaRegistros
+        registros={[
+          {
+            idRegistro: 3,
+            fechaHora: "2026-08-07T00:05:00.000Z",
+            operacion: "monitorear",
+            resultado: "fallo",
+            mensajeError: "El contenedor ya no esta en ejecucion",
+            idServicio: 7,
+            idUsuario: 1,
+          },
+        ]}
+      />
+    );
+
+    const item = screen.getByRole("listitem");
+    expect(item).toHaveTextContent(/sincronizacion automatica/i);
+    expect(item).not.toHaveTextContent(/^monitorear/i);
+  });
+
   it("muestra el mensaje de error cuando el registro fallo", () => {
     render(
       <ListaRegistros

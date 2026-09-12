@@ -1,11 +1,19 @@
 // Lista del historico de operaciones de un servicio. Reutilizada por el
 // detalle de servicio (RF-17) y por Monitoreo > Historico de operaciones
-// (RF-15, CU-09).
+// (RF-15, RF-19, CU-09).
 import type { RegistroDespliegue } from "@/tipos/servicio";
 
 interface Props {
   registros: RegistroDespliegue[];
 }
+
+const ETIQUETAS_OPERACION: Record<RegistroDespliegue["operacion"], string> = {
+  desplegar: "desplegar",
+  detener: "detener",
+  reiniciar: "reiniciar",
+  eliminar: "eliminar",
+  monitorear: "Sincronizacion automatica",
+};
 
 export function ListaRegistros({ registros }: Props) {
   if (registros.length === 0) {
@@ -19,7 +27,7 @@ export function ListaRegistros({ registros }: Props) {
           key={registro.idRegistro}
           className="rounded-md border border-borde p-sm text-sm text-texto"
         >
-          <span className="font-medium">{registro.operacion}</span>{" "}
+          <span className="font-medium">{ETIQUETAS_OPERACION[registro.operacion]}</span>{" "}
           <span className="text-texto-secundario">
             ({registro.resultado}) — {new Date(registro.fechaHora).toLocaleString("es-GT")}
           </span>

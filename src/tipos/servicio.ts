@@ -49,7 +49,7 @@ export interface ServicioBasico {
 export interface RegistroDespliegue {
   idRegistro: number;
   fechaHora: string;
-  operacion: "desplegar" | "detener" | "reiniciar" | "eliminar";
+  operacion: "desplegar" | "detener" | "reiniciar" | "eliminar" | "monitorear";
   resultado: "exito" | "fallo";
   mensajeError: string | null;
   idServicio: number;
