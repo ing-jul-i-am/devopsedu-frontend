@@ -7,6 +7,7 @@ import { renderizarConProveedores } from "../../ayudas/renderizar-con-proveedore
 import { crearUsuarioDePrueba } from "../../fixtures/usuario.factory";
 import { BarraNavegacion } from "@/componentes-comunes/barra-navegacion";
 import { guardarSesion, limpiarSesion } from "@/infraestructura/almacenamiento-sesion";
+import { ID_ROL_DOCENTE, ID_ROL_ESTUDIANTE } from "@/tipos/roles";
 
 describe("BarraNavegacion", () => {
   afterEach(() => {
@@ -54,6 +55,65 @@ describe("BarraNavegacion", () => {
       "href",
       "/monitoreo/metricas"
     );
+  });
+
+  it("muestra el enlace a Mi ruta solo para el rol estudiante (RF-22)", () => {
+    guardarSesion("token-de-prueba", crearUsuarioDePrueba({ idRol: ID_ROL_ESTUDIANTE }));
+
+    renderizarConProveedores(
+      <BarraNavegacion>
+        <p>Contenido de la pagina</p>
+      </BarraNavegacion>
+    );
+
+    expect(screen.getByRole("link", { name: /mi ruta/i })).toHaveAttribute(
+      "href",
+      "/aprendizaje/mi-ruta"
+    );
+  });
+
+  it("muestra los enlaces de Administracion solo para el rol docente (RF-20, RF-21)", () => {
+    guardarSesion("token-de-prueba", crearUsuarioDePrueba({ idRol: ID_ROL_DOCENTE }));
+
+    renderizarConProveedores(
+      <BarraNavegacion>
+        <p>Contenido de la pagina</p>
+      </BarraNavegacion>
+    );
+
+    expect(screen.getByRole("link", { name: /modulos de aprendizaje/i })).toHaveAttribute(
+      "href",
+      "/administracion/modulos"
+    );
+    expect(screen.getByRole("link", { name: /gestion de estudiantes/i })).toHaveAttribute(
+      "href",
+      "/administracion/estudiantes"
+    );
+  });
+
+  it("no muestra los enlaces de Administracion para el rol estudiante", () => {
+    guardarSesion("token-de-prueba", crearUsuarioDePrueba({ idRol: ID_ROL_ESTUDIANTE }));
+
+    renderizarConProveedores(
+      <BarraNavegacion>
+        <p>Contenido de la pagina</p>
+      </BarraNavegacion>
+    );
+
+    expect(screen.queryByRole("link", { name: /modulos de aprendizaje/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /gestion de estudiantes/i })).not.toBeInTheDocument();
+  });
+
+  it("no muestra el enlace a Mi ruta para el rol docente", () => {
+    guardarSesion("token-de-prueba", crearUsuarioDePrueba({ idRol: ID_ROL_DOCENTE }));
+
+    renderizarConProveedores(
+      <BarraNavegacion>
+        <p>Contenido de la pagina</p>
+      </BarraNavegacion>
+    );
+
+    expect(screen.queryByRole("link", { name: /mi ruta/i })).not.toBeInTheDocument();
   });
 
   it("resalta el enlace de la seccion activa", () => {

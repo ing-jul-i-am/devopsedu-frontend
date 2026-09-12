@@ -10,6 +10,13 @@ import { DetalleServicioPage } from "@/modulos/servicios/paginas/detalle-servici
 import { CapacidadServidorPage } from "@/modulos/servicios/paginas/capacidad-servidor.page";
 import { HistoricoOperacionesPage } from "@/modulos/monitoreo/paginas/historico-operaciones.page";
 import { GraficasMetricasPage } from "@/modulos/monitoreo/paginas/graficas-metricas.page";
+import { MiRutaPage } from "@/modulos/aprendizaje/paginas/mi-ruta.page";
+import { ModuloAprendizajePage } from "@/modulos/aprendizaje/paginas/modulo-aprendizaje.page";
+import { EvaluacionModuloPage } from "@/modulos/aprendizaje/paginas/evaluacion-modulo.page";
+import { PanelModulosPage } from "@/modulos/administracion/paginas/panel-modulos.page";
+import { CrearModuloPage } from "@/modulos/administracion/paginas/crear-modulo.page";
+import { EditarModuloPage } from "@/modulos/administracion/paginas/editar-modulo.page";
+import { GestionEstudiantesPage } from "@/modulos/administracion/paginas/gestion-estudiantes.page";
 import { DisenoAutenticado } from "./diseno-autenticado";
 import { ID_ROL_DOCENTE, ID_ROL_ESTUDIANTE } from "@/tipos/roles";
 
@@ -37,6 +44,8 @@ export function GuardaRol({ rolesPermitidos }: { rolesPermitidos: number[] }) {
 }
 
 const ROLES_SERVICIOS = [ID_ROL_ESTUDIANTE, ID_ROL_DOCENTE];
+const ROLES_APRENDIZAJE_ESTUDIANTE = [ID_ROL_ESTUDIANTE];
+const ROLES_ADMINISTRACION_DOCENTE = [ID_ROL_DOCENTE];
 
 export function Rutas() {
   return (
@@ -56,6 +65,20 @@ export function Rutas() {
             <Route path="/servicios/:idServicio" element={<DetalleServicioPage />} />
             <Route path="/monitoreo/historico" element={<HistoricoOperacionesPage />} />
             <Route path="/monitoreo/metricas" element={<GraficasMetricasPage />} />
+          </Route>
+          <Route element={<GuardaRol rolesPermitidos={ROLES_APRENDIZAJE_ESTUDIANTE} />}>
+            <Route path="/aprendizaje/mi-ruta" element={<MiRutaPage />} />
+            <Route path="/aprendizaje/modulos/:idModulo" element={<ModuloAprendizajePage />} />
+            <Route
+              path="/aprendizaje/modulos/:idModulo/evaluacion"
+              element={<EvaluacionModuloPage />}
+            />
+          </Route>
+          <Route element={<GuardaRol rolesPermitidos={ROLES_ADMINISTRACION_DOCENTE} />}>
+            <Route path="/administracion/modulos" element={<PanelModulosPage />} />
+            <Route path="/administracion/modulos/nuevo" element={<CrearModuloPage />} />
+            <Route path="/administracion/modulos/:idModulo" element={<EditarModuloPage />} />
+            <Route path="/administracion/estudiantes" element={<GestionEstudiantesPage />} />
           </Route>
         </Route>
       </Route>
