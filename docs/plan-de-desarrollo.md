@@ -12,16 +12,26 @@
 | Etapa 2 — Módulo Servicios | Completa | `83ffcd4` |
 | Mejora transversal — Navegación y panel principal (RNF-03) | Completa | `dec4ebc` |
 | Etapa 3 — Módulo Monitoreo | Completa | `1e237f5` |
-| Etapa 4 — Módulo Aprendizaje | Siguiente paso (backend no implementado) | — |
-| Etapa 5 — Módulo Administración | Pendiente (backend no implementado) | — |
+| Etapa 4 — Módulo Aprendizaje (estudiante) | Completa | (pendiente de commit) |
+| Etapa 5 — Módulo Administración (parcial: módulos y estudiantes) | Completa; Reportes/Exportación pendientes (backend no implementado) | (pendiente de commit) |
 
-**Próximo paso concreto:** Etapa 4 — Módulo Aprendizaje. El backend **no implementa todavía** `/api/aprendizaje/*` (ver sección 6 de `docs/contrato-api.md`), así que antes de escribir código hay que decidir y documentar como `DT-07` el contrato asumido para `/api/aprendizaje/mi-ruta`, `/api/aprendizaje/actividades` y `/api/aprendizaje/evaluaciones` (o los nombres de endpoint que se definan), construyendo esta etapa contra mocks de MSW en vez de contra el backend real. Confirmar con el usuario el contrato asumido antes de implementar las 3 vistas (Mi ruta, Actividad, Evaluación). Cada vista nueva debe registrarse dentro de `DisenoAutenticado` en `rutas.tsx` y agregarse a `ENLACES` en `src/componentes-comunes/barra-navegacion.tsx`.
+**Próximo paso concreto:** el backend avanzó a la rama `cuarta-semana` (ver actualización de `docs/contrato-api.md`) e implementó de verdad `/api/modulos`, `/api/rutas` y `/api/aprendizaje/*` (Etapa 6 del backend, RF-20 a RF-24), además de `/api/usuarios` (DT-08 del backend, reseteo de contraseña). Esto permitió construir la Etapa 4 y la mayor parte de la Etapa 5 **integradas contra el backend real**, igual que las Etapas 1-3 — ya no aplica la premisa original de construirlas contra mocks especulativos. Lo único que sigue pendiente de la Etapa 5 es `/api/reportes` (RF-25, RF-26, CU-15, CU-16): el backend todavía no lo implementa (ver sección 10 de `docs/contrato-api.md`), así que **Reportes** y **Exportación** quedan bloqueadas hasta que el backend avance a la Etapa 7. Próximo paso cuando eso ocurra: repetir el mismo procedimiento (leer el contrato actualizado, confirmar decisiones pendientes con el usuario, TDD por vista) para esas dos vistas.
+
+Antes de continuar con cualquier trabajo nuevo: correr `npm run dev` contra el backend real y verificar manualmente las vistas de Aprendizaje (como estudiante, con una ruta ya asignada) y Administración (como docente) — no se ejecutó verificación manual en esta sesión porque no había una instancia del backend disponible en este entorno.
+
+**Hallazgos de la verificación manual (usuario, 2026-09-12) y su resolución:**
+
+1. El enlace "Ver evaluación del módulo" aparecía siempre, incluso sin evaluación asignada, llevando a un error confuso — **corregido**: ahora se oculta solo cuando el backend responde `404` (no existe evaluación); sigue visible si responde `422` (existe pero aún no alcanza su `fechaDisponible`).
+2. Y 3. No hay bloqueo secuencial entre módulos ni indicador visual de progreso por módulo en "Mi ruta" — **bloqueado por el backend**: `GET /api/aprendizaje/mi-ruta` no expone un estado por módulo (solo el progreso agregado de toda la ruta). Documentado como `DT-11`, con la semántica de `estado` (`completado`/`en_progreso`/`sin_iniciar`) ya acordada con el usuario, pendiente de que el backend lo implemente en una sesión separada sobre `devopsedu-backend`.
+4. El reseteo de contraseña falla por CORS (`PATCH` no está en `Access-Control-Allow-Methods` de `devopsedu-backend/src/api/middlewares/cors.ts`) — es un bug del backend, no del frontend; el usuario lo corregirá en su propia sesión de ese repositorio.
+
+**Próximo paso concreto (actualizado):** cuando el usuario confirme que el backend ya expone `estado` por módulo en `mi-ruta` (ver `DT-11`) y que el middleware de CORS acepta `PATCH`, retomar aquí: (a) releer `docs/contrato-api.md` actualizado, (b) implementar el coloreado de `mi-ruta.page.tsx` y el bloqueo secuencial con TDD, (c) verificar manualmente el reseteo de contraseña.
 
 ## Cómo retomar el trabajo en una sesión nueva
 
 1. Leer este archivo completo.
 2. Leer `CLAUDE.md` (convenciones obligatorias del proyecto) y los tres skills en `.claude/skills/` (`ciclo-tdd`, `nueva-vista-react`, `trazabilidad-requerimientos`).
-3. Leer `docs/contrato-api.md` (contrato real de la API — fuente autoritativa para los grupos `/api/auth`, `/api/servicios`, `/api/servidor`) y `docs/decisiones-tecnicas.md` (decisiones `DT-XX` ya tomadas, con su justificación).
+3. Leer `docs/contrato-api.md` (contrato real de la API — fuente autoritativa para los grupos `/api/auth`, `/api/servicios`, `/api/servidor`, `/api/modulos`, `/api/rutas`, `/api/aprendizaje` y `/api/usuarios`) y `docs/decisiones-tecnicas.md` (decisiones `DT-XX` ya tomadas, con su justificación).
 4. Correr `git log --oneline` para confirmar el último commit real.
 5. Correr `npm install && npm test && npm run build` para confirmar que el repo sigue en verde antes de seguir agregando código.
 6. Continuar con la etapa marcada como "Siguiente paso" en la tabla de arriba, o la primera marcada como "Pendiente" si esta tabla no se actualizó.
@@ -35,7 +45,7 @@ El repositorio `devopsedu-frontend` partió vacío, con solo `CLAUDE.md` y `.cla
 1. El documento de diseño técnico completo (`.claude/Proyecto de Julian Barrera v1.13.md`), del que se extrajo el catálogo de RF-01 a RF-26 y RNF-01 a RNF-25, la especificación de 6 de los 16 casos de uso, el diagrama de estados del `Servicio` (7 estados), el diagrama de componentes (interfaz `IRestAPI` conceptual) y el modelo de datos.
 2. **`docs/contrato-api.md`** — el contrato real de la API del backend (`devopsedu-backend`, rama `segunda-semana`, commit `04f88c2`). Este documento **reemplaza cualquier inferencia** hecha a partir del documento de diseño para los grupos ya implementados: `/api/auth`, `/api/servicios`, `/api/servidor`. Es la fuente autoritativa para el cliente HTTP, los hooks de TanStack Query y los mocks de MSW de esos tres módulos.
 
-**Hallazgo clave del contrato de API:** el backend **solo tiene implementados** los grupos de Sesión (`/api/auth`), Servicios (`/api/servicios`) y Recursos del servidor (`/api/servidor`). Los grupos `/api/aprendizaje`, `/api/modulos`, `/api/rutas` y `/api/reportes` (Aprendizaje y Administración, RF-20 a RF-26) **no existen todavía en el backend**. Por eso las Etapas 1-3 pueden construirse totalmente integradas contra el backend real, mientras que las Etapas 4-5 solo pueden construirse contra mocks especulativos, documentados como dependientes de trabajo futuro del backend.
+**Hallazgo clave del contrato de API (histórico, ya superado):** en su versión original, el backend solo tenía implementados los grupos de Sesión (`/api/auth`), Servicios (`/api/servicios`) y Recursos del servidor (`/api/servidor`); Aprendizaje y Administración no existían todavía. Eso cambió con la rama `cuarta-semana` del backend (Etapa 6 del backend, RF-20 a RF-24): `/api/modulos`, `/api/rutas`, `/api/aprendizaje/*` y `/api/usuarios` (DT-08 del backend) ya están implementados, así que las Etapas 4 y 5 (salvo Reportes/Exportación, RF-25/RF-26, que siguen sin backend) también se construyeron integradas contra la API real, igual que las Etapas 1-3.
 
 **Discrepancia resuelta:** el mockup "Vista 02 — Registro" muestra un campo **ROL (selector)**, pero el contrato de API confirma que **el rol no se acepta desde el cliente** — el backend siempre asigna `estudiante` en el registro. Decisión tomada: omitir el campo en la implementación real (documentado como `DT-01` en `docs/decisiones-tecnicas.md`, junto con el resto de decisiones técnicas registradas hasta ahora).
 
@@ -125,22 +135,40 @@ No se contempló la tercera forma de error de `errores-api.ts` (`400` de query s
 
 ---
 
-## Etapa 4 — Módulo Aprendizaje (RF-22 a RF-24, CU-12 a CU-14) — PENDIENTE (backend no implementado)
+## Etapa 4 — Módulo Aprendizaje del estudiante (RF-22 a RF-24, CU-12 a CU-14) — COMPLETA
 
-El backend no implementa todavía `/api/aprendizaje/*` (sección 6 del contrato). Construir contra mocks de MSW, documentando el contrato asumido como `DT-07`, sin considerar la integración completa hasta que el backend entregue el grupo.
+El backend avanzó a la rama `cuarta-semana` e implementó de verdad `/api/aprendizaje/*` (sección 6 del contrato actualizado), incluyendo los endpoints `GET /api/modulos/:idModulo` (4.2b) y `GET /api/aprendizaje/modulos/:idModulo` (6.1b) que resolvieron un vacío detectado en la primera revisión del contrato (no había forma de que el estudiante consultara el contenido educativo de un módulo). Por eso esta etapa se construyó **integrada contra el backend real**, no contra mocks especulativos como preveía la versión anterior de este plan.
 
-- [ ] **Mi ruta** — RF-22, CU-13.
-- [ ] **Actividad** — RF-23, CU-12.
-- [ ] **Evaluación** — RF-24, CU-14 (mockup Vista 12).
+- [x] **Mi ruta** (`src/modulos/aprendizaje/paginas/mi-ruta.page.tsx`, ruta `/aprendizaje/mi-ruta`) — RF-22, CU-13. `GET /api/aprendizaje/mi-ruta` (`use-mi-ruta.ts`). Casos: sin ruta asignada (`200` con `null`), módulos ordenados por `ordenSecuencia` con el progreso, cada uno enlazando a su contenido.
+- [x] **Actividad / contenido de módulo** (`modulo-aprendizaje.page.tsx`, ruta `/aprendizaje/modulos/:idModulo`) — RF-23, CU-12. Al montar llama `POST .../iniciar` (idempotente) y `GET .../modulos/:idModulo` (6.1b) para el contenido. Los cuatro tipos de bloque (texto, imagen, enlace, actividad) se renderizan con el componente nuevo `src/modulos/aprendizaje/componentes/bloque-contenido.tsx`; el bloque `texto` (Markdown) se renderiza con `react-markdown` (ver `DT-07`).
+- [x] **Evaluación** (`evaluacion-modulo.page.tsx`, ruta `/aprendizaje/modulos/:idModulo/evaluacion`, mockup Vista 12) — RF-24, CU-14. Preguntas de opción múltiple con radios accesibles, envío deshabilitado hasta responder todas, retroalimentación por pregunta sin revelar la respuesta correcta. Cubre los tres errores propios de esta vista (`409 EvaluacionYaAprobadaError`, `409 IntentosAgotadosError`, `422 EvaluacionNoDisponibleError`).
+- [x] `src/tipos/aprendizaje.ts` con las formas de `Modulo`, `BloqueContenido`, `Actividad`, `Evaluacion`, `RutaAsignada`, `MiRuta`, `ModuloConContenido`, etc. (archivo de tipos puro, sin TDD).
+- [x] `ENLACES` en `barra-navegacion.tsx` extendido con filtrado por rol (nuevo campo `rolesPermitidos` por enlace): "Mi ruta" solo visible para `estudiante`. Nuevo bloque `GuardaRol` en `rutas.tsx` para las tres rutas de este módulo.
+- [x] Handlers de MSW por defecto para los 4 endpoints de `/api/aprendizaje/*` en `tests/mocks/handlers.ts`.
+- [x] Verificación: `npm test` (165 pruebas unitarias + integración en total tras Etapas 4 y 5), `npm run test:coverage` (≈98% líneas/statements, 91% ramas, 92% funciones — sobre los umbrales 75/75/70/75), `npm run build`, `npm run lint` — todo en verde.
+- [ ] Verificación manual con `npm run dev` contra el backend real — pendiente de que el usuario la ejecute (no había una instancia del backend disponible en el entorno de esta sesión).
 
 ---
 
-## Etapa 5 — Módulo Administración (RF-20, RF-21, RF-25, RF-26, CU-10, CU-11, CU-15, CU-16) — PENDIENTE (backend no implementado)
+## Etapa 5 — Módulo Administración (RF-20, RF-21, CU-10, CU-11) — COMPLETA (parcial); Reportes/Exportación pendientes
 
-El backend no implementa todavía `/api/modulos`, `/api/rutas`, `/api/reportes`. Mismo tratamiento que la Etapa 4, contrato asumido documentado como `DT-08`.
+El backend implementó `/api/modulos` y `/api/rutas` (Etapa 6 del backend) además de `/api/usuarios` (DT-08 del backend). `/api/reportes` (RF-25, RF-26, CU-15, CU-16) **sigue sin implementarse** — ver sección 10 del contrato — así que Reportes y Exportación quedan fuera de esta etapa hasta que el backend avance a su Etapa 7.
 
-- [ ] **Gestión de módulos** — RF-20, CU-10.
-- [ ] **Asignación de rutas** — RF-21, CU-11.
+- [x] **Gestión de módulos** — RF-20, CU-10:
+  - `panel-modulos.page.tsx` (ruta `/administracion/modulos`) — `GET /api/modulos`.
+  - `crear-modulo.page.tsx` / `editar-modulo.page.tsx` (rutas `/administracion/modulos/nuevo` y `/administracion/modulos/:idModulo`) — `POST`/`PUT /api/modulos`, con el formulario compartido `src/modulos/administracion/componentes/formulario-modulo.tsx`.
+  - Editor de bloques (`componentes/editor-bloques.tsx`): agregar/quitar/reordenar bloques de texto, imagen, enlace y actividad. El bloque `imagen` sube el archivo a `POST /api/modulos/imagenes` y usa la `url` devuelta.
+  - Bloque `texto` con editor WYSIWYG (`src/componentes-comunes/editor-texto-enriquecido.tsx`, TipTap + `tiptap-markdown`, ver `DT-08`) que serializa a Markdown, según lo pedido explícitamente por el usuario (no Markdown crudo).
+  - Dentro de `editar-modulo.page.tsx`: secciones para crear la actividad (`componentes/formulario-actividad.tsx`, `POST .../actividades`) y la evaluación (`componentes/formulario-evaluacion.tsx`, `POST .../evaluacion`, preguntas dinámicas de 2-5 opciones) del módulo.
+- [x] **Gestión de estudiantes** (RF-21/CU-11 + DT-08 del backend combinados, ver `DT-09` y `DT-10`): `gestion-estudiantes.page.tsx` (ruta `/administracion/estudiantes`). Campo manual de `idUsuario` (no existe endpoint de listado de usuarios) + selección de módulos por casillas (orden = orden de selección) → `POST /api/rutas`; sección separada de reseteo de contraseña con `BotonAccionCritica` → `PATCH /api/usuarios/:id/contrasena`.
+- [x] `ENLACES` en `barra-navegacion.tsx` extendido con "Módulos de aprendizaje" y "Gestión de estudiantes", visibles solo para `docente`. Nuevo bloque `GuardaRol` en `rutas.tsx`.
+- [x] Handlers de MSW por defecto para los 6 endpoints de `/api/modulos`, `/api/rutas` y `/api/usuarios` en `tests/mocks/handlers.ts`.
+- [x] Nuevas dependencias `react-markdown` (lectura de Markdown, `DT-07`) y `@tiptap/react` + `@tiptap/starter-kit` + `@tiptap/pm` + `tiptap-markdown` (editor WYSIWYG, `DT-08`), ambas justificadas en `docs/decisiones-tecnicas.md` (RNF-20).
+- [x] Verificación: incluida en la misma corrida de la Etapa 4 (`npm test`, `npm run test:coverage`, `npm run build`, `npm run lint` — todo en verde).
+- [ ] Verificación manual con `npm run dev` contra el backend real (como docente) — pendiente de que el usuario la ejecute.
+
+**Pendiente de la Etapa 5 (bloqueado por el backend):**
+
 - [ ] **Reportes** — RF-25, CU-15 (modo lectura también para investigador).
 - [ ] **Exportación** — RF-26, CU-16.
 
