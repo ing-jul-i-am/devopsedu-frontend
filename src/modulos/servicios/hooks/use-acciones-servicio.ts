@@ -3,7 +3,7 @@
 // Cubre: RF-11, RF-12, RF-13, RF-14 — CU-05, CU-06
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { clienteHttp } from "@/infraestructura/cliente-http";
-import type { ServicioBasico } from "@/tipos/servicio";
+import type { ResultadoOperacion, ServicioBasico } from "@/tipos/servicio";
 
 function useInvalidarServicio(idServicio: number) {
   const queryClient = useQueryClient();
@@ -13,7 +13,10 @@ function useInvalidarServicio(idServicio: number) {
   };
 }
 
-function useAccionServicio(accion: "desplegar" | "detener" | "reiniciar", idServicio: number) {
+// detener y reiniciar devuelven ServicioBasico; desplegar y eliminar devuelven
+// la forma extendida con el resultado de la limpieza del contenedor anterior
+// (contrato 3.2, DT-15 del backend).
+function useAccionServicio(accion: "detener" | "reiniciar", idServicio: number) {
   const invalidar = useInvalidarServicio(idServicio);
   return useMutation({
     mutationFn: async () => {
@@ -27,7 +30,16 @@ function useAccionServicio(accion: "desplegar" | "detener" | "reiniciar", idServ
 }
 
 export function useDesplegarServicio(idServicio: number) {
-  return useAccionServicio("desplegar", idServicio);
+  const invalidar = useInvalidarServicio(idServicio);
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await clienteHttp.post<ResultadoOperacion>(
+        `/servicios/${idServicio}/desplegar`
+      );
+      return data;
+    },
+    onSuccess: invalidar,
+  });
 }
 
 export function useDetenerServicio(idServicio: number) {
@@ -42,7 +54,9 @@ export function useEliminarServicio(idServicio: number) {
   const invalidar = useInvalidarServicio(idServicio);
   return useMutation({
     mutationFn: async () => {
-      const { data } = await clienteHttp.delete<ServicioBasico>(`/servicios/${idServicio}`);
+      const { data } = await clienteHttp.delete<ResultadoOperacion>(
+        `/servicios/${idServicio}`
+      );
       return data;
     },
     onSuccess: invalidar,

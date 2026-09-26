@@ -7,6 +7,7 @@ import { PanelPrincipalPage } from "@/modulos/principal/paginas/panel-principal.
 import { PanelServiciosPage } from "@/modulos/servicios/paginas/panel-servicios.page";
 import { CrearServicioPage } from "@/modulos/servicios/paginas/crear-servicio.page";
 import { DetalleServicioPage } from "@/modulos/servicios/paginas/detalle-servicio.page";
+import { EditarConfiguracionPage } from "@/modulos/servicios/paginas/editar-configuracion.page";
 import { CapacidadServidorPage } from "@/modulos/servicios/paginas/capacidad-servidor.page";
 import { HistoricoOperacionesPage } from "@/modulos/monitoreo/paginas/historico-operaciones.page";
 import { GraficasMetricasPage } from "@/modulos/monitoreo/paginas/graficas-metricas.page";
@@ -63,6 +64,10 @@ export function Rutas() {
             <Route path="/servicios" element={<PanelServiciosPage />} />
             <Route path="/servicios/nuevo" element={<CrearServicioPage />} />
             <Route path="/servicios/:idServicio" element={<DetalleServicioPage />} />
+            <Route
+              path="/servicios/:idServicio/configuracion"
+              element={<EditarConfiguracionPage />}
+            />
             <Route path="/monitoreo/historico" element={<HistoricoOperacionesPage />} />
             <Route path="/monitoreo/metricas" element={<GraficasMetricasPage />} />
           </Route>

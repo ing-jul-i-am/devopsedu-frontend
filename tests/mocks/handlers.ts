@@ -5,7 +5,7 @@
 // servidorMock.use() para probar casos particulares.
 import { http, HttpResponse, type HttpHandler } from "msw";
 import { configuracion } from "@/infraestructura/configuracion";
-import type { Servicio, ServicioBasico } from "@/tipos/servicio";
+import type { ResultadoOperacion, Servicio, ServicioBasico } from "@/tipos/servicio";
 import type { Modulo } from "@/tipos/aprendizaje";
 
 const CORREO_VALIDO = "estudiante@devopsedu.local";
@@ -113,45 +113,58 @@ export const handlers: HttpHandler[] = [
     HttpResponse.json({
       ...SERVICIO_DE_PRUEBA,
       idServicio: Number(params["idServicio"]),
+      contenedor: { existe: false, volumenes: [] },
       registros: [],
     })
   ),
 
-  http.post(
-    `${configuracion.prefijoApi}/servicios/:idServicio/desplegar`,
-    ({ params }) =>
-      HttpResponse.json<ServicioBasico>({
+  http.put(
+    `${configuracion.prefijoApi}/servicios/:idServicio/configuracion`,
+    async ({ params, request }) => {
+      const cuerpo = (await request.json()) as { configuracion: Servicio["configuracion"] };
+      return HttpResponse.json({
+        ...SERVICIO_DE_PRUEBA,
         idServicio: Number(params["idServicio"]),
-        nombre: SERVICIO_DE_PRUEBA.nombre,
-        estado: "en_ejecucion",
-      })
+        configuracion: cuerpo.configuracion,
+      });
+    }
   ),
 
-  http.post(
-    `${configuracion.prefijoApi}/servicios/:idServicio/detener`,
-    ({ params }) =>
-      HttpResponse.json<ServicioBasico>({
-        idServicio: Number(params["idServicio"]),
-        nombre: SERVICIO_DE_PRUEBA.nombre,
-        estado: "detenido",
-      })
+  http.post(`${configuracion.prefijoApi}/servicios/:idServicio/desplegar`, ({ params }) =>
+    HttpResponse.json<ResultadoOperacion>({
+      idServicio: Number(params["idServicio"]),
+      nombre: SERVICIO_DE_PRUEBA.nombre,
+      estado: "en_ejecucion",
+      recreado: false,
+      volumenesEliminados: [],
+      volumenesOmitidos: [],
+    })
   ),
 
-  http.post(
-    `${configuracion.prefijoApi}/servicios/:idServicio/reiniciar`,
-    ({ params }) =>
-      HttpResponse.json<ServicioBasico>({
-        idServicio: Number(params["idServicio"]),
-        nombre: SERVICIO_DE_PRUEBA.nombre,
-        estado: "en_ejecucion",
-      })
-  ),
-
-  http.delete(`${configuracion.prefijoApi}/servicios/:idServicio`, ({ params }) =>
+  http.post(`${configuracion.prefijoApi}/servicios/:idServicio/detener`, ({ params }) =>
     HttpResponse.json<ServicioBasico>({
       idServicio: Number(params["idServicio"]),
       nombre: SERVICIO_DE_PRUEBA.nombre,
+      estado: "detenido",
+    })
+  ),
+
+  http.post(`${configuracion.prefijoApi}/servicios/:idServicio/reiniciar`, ({ params }) =>
+    HttpResponse.json<ServicioBasico>({
+      idServicio: Number(params["idServicio"]),
+      nombre: SERVICIO_DE_PRUEBA.nombre,
+      estado: "en_ejecucion",
+    })
+  ),
+
+  http.delete(`${configuracion.prefijoApi}/servicios/:idServicio`, ({ params }) =>
+    HttpResponse.json<ResultadoOperacion>({
+      idServicio: Number(params["idServicio"]),
+      nombre: SERVICIO_DE_PRUEBA.nombre,
       estado: "eliminado",
+      recreado: false,
+      volumenesEliminados: [],
+      volumenesOmitidos: [],
     })
   ),
 
@@ -202,37 +215,43 @@ export const handlers: HttpHandler[] = [
     HttpResponse.json({ url: "/archivos/modulos/imagen-de-prueba.png" }, { status: 201 })
   ),
 
-  http.post(`${configuracion.prefijoApi}/modulos/:idModulo/actividades`, async ({ params, request }) => {
-    const cuerpo = (await request.json()) as { descripcion?: string; orden?: number };
-    return HttpResponse.json(
-      {
-        idActividad: 1,
-        descripcion: cuerpo.descripcion ?? "",
-        criteriosValidacion: { operacion: "desplegar" },
-        orden: cuerpo.orden ?? 1,
-        idModulo: Number(params["idModulo"]),
-      },
-      { status: 201 }
-    );
-  }),
+  http.post(
+    `${configuracion.prefijoApi}/modulos/:idModulo/actividades`,
+    async ({ params, request }) => {
+      const cuerpo = (await request.json()) as { descripcion?: string; orden?: number };
+      return HttpResponse.json(
+        {
+          idActividad: 1,
+          descripcion: cuerpo.descripcion ?? "",
+          criteriosValidacion: { operacion: "desplegar" },
+          orden: cuerpo.orden ?? 1,
+          idModulo: Number(params["idModulo"]),
+        },
+        { status: 201 }
+      );
+    }
+  ),
 
-  http.post(`${configuracion.prefijoApi}/modulos/:idModulo/evaluacion`, async ({ params, request }) => {
-    const cuerpo = (await request.json()) as {
-      titulo?: string;
-      preguntas?: unknown[];
-      fechaDisponible?: string;
-    };
-    return HttpResponse.json(
-      {
-        idEvaluacion: 1,
-        titulo: cuerpo.titulo ?? "",
-        preguntas: cuerpo.preguntas ?? [],
-        fechaDisponible: cuerpo.fechaDisponible ?? new Date().toISOString(),
-        idModulo: Number(params["idModulo"]),
-      },
-      { status: 201 }
-    );
-  }),
+  http.post(
+    `${configuracion.prefijoApi}/modulos/:idModulo/evaluacion`,
+    async ({ params, request }) => {
+      const cuerpo = (await request.json()) as {
+        titulo?: string;
+        preguntas?: unknown[];
+        fechaDisponible?: string;
+      };
+      return HttpResponse.json(
+        {
+          idEvaluacion: 1,
+          titulo: cuerpo.titulo ?? "",
+          preguntas: cuerpo.preguntas ?? [],
+          fechaDisponible: cuerpo.fechaDisponible ?? new Date().toISOString(),
+          idModulo: Number(params["idModulo"]),
+        },
+        { status: 201 }
+      );
+    }
+  ),
 
   http.post(`${configuracion.prefijoApi}/rutas`, async ({ request }) => {
     const cuerpo = (await request.json()) as { idUsuario?: number; idModulos?: number[] };

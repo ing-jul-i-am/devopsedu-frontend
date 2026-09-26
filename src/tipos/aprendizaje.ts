@@ -16,16 +16,16 @@ export interface Modulo {
 }
 
 export interface CondicionesActividad {
-  imagenDocker?: string;
-  volumenesMinimos?: number;
-  puertosMinimos?: number;
-  cpuMinimo?: number;
-  memoriaMinima?: number;
+  imagenDocker?: string | undefined;
+  volumenesMinimos?: number | undefined;
+  puertosMinimos?: number | undefined;
+  cpuMinimo?: number | undefined;
+  memoriaMinima?: number | undefined;
 }
 
 export interface CriteriosValidacionActividad {
   operacion: "desplegar" | "detener" | "reiniciar" | "eliminar";
-  condiciones?: CondicionesActividad;
+  condiciones?: CondicionesActividad | undefined;
 }
 
 export interface Actividad {

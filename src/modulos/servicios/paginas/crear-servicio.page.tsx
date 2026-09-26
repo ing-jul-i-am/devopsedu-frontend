@@ -1,7 +1,9 @@
-// Asistente de creacion de un servicio contenedorizado.
+// Asistente de creacion de un servicio contenedorizado, en dos pasos: datos y
+// recursos primero, configuracion avanzada (puertos, variables de entorno y
+// volumenes) despues. Ver DT-13.
 // Cubre: RF-05, RF-06, RF-07, RF-09, RNF-02, RNF-05 — CU-03
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { FormProvider, useForm, type Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { isAxiosError } from "axios";
@@ -9,41 +11,30 @@ import { useNavigate } from "react-router-dom";
 import { CampoTexto } from "@/componentes-comunes/campo-texto";
 import { Boton } from "@/componentes-comunes/boton";
 import { normalizarErrorApi } from "@/infraestructura/errores-api";
-import { useImagenesDocker } from "../hooks/use-imagenes-docker";
+import { camposConfiguracion, validarCrucesConfiguracion } from "../esquema-configuracion";
+import { aRegistroVariables } from "../utilidades/variables-entorno";
+import { CamposRecursos } from "../componentes/campos-recursos";
+import { PasoConfiguracionAvanzada } from "../componentes/paso-configuracion-avanzada";
 import { useCrearServicio } from "../hooks/use-crear-servicio";
 
-const esquemaCrearServicio = z.object({
-  nombre: z
-    .string()
-    .min(3, "El nombre debe tener al menos 3 caracteres")
-    .max(120, "El nombre no puede superar los 120 caracteres"),
-  descripcion: z
-    .string()
-    .max(500, "La descripcion no puede superar los 500 caracteres")
-    .optional(),
-  imagenDocker: z
-    .string()
-    .min(1, "La imagen Docker es obligatoria")
-    .max(255, "La imagen Docker no puede superar los 255 caracteres"),
-  cpuAsignado: z
-    .number({ invalid_type_error: "La CPU asignada es obligatoria" })
-    .positive("La CPU asignada debe ser mayor a 0")
-    .max(8, "La CPU asignada no puede superar los 8 nucleos"),
-  memoriaAsignada: z
-    .number({ invalid_type_error: "La memoria asignada es obligatoria" })
-    .int("La memoria asignada debe ser un numero entero")
-    .positive("La memoria asignada debe ser mayor a 0")
-    .max(131072, "La memoria asignada no puede superar los 131072 MB"),
-  almacenamientoAsignado: z
-    .number({ invalid_type_error: "El almacenamiento asignado es obligatorio" })
-    .int("El almacenamiento asignado debe ser un numero entero")
-    .positive("El almacenamiento asignado debe ser mayor a 0")
-    .max(1048576, "El almacenamiento asignado no puede superar los 1048576 MB"),
-});
+const esquemaCrearServicio = z
+  .object({
+    nombre: z
+      .string()
+      .min(3, "El nombre debe tener al menos 3 caracteres")
+      .max(120, "El nombre no puede superar los 120 caracteres"),
+    descripcion: z
+      .string()
+      .max(500, "La descripcion no puede superar los 500 caracteres")
+      .optional(),
+    ...camposConfiguracion,
+  })
+  .superRefine(validarCrucesConfiguracion);
 
 type DatosFormularioCrearServicio = z.infer<typeof esquemaCrearServicio>;
+type RutaCampo = Path<DatosFormularioCrearServicio>;
 
-const CAMPOS_FORMULARIO = [
+const CAMPOS_PASO_UNO = [
   "nombre",
   "descripcion",
   "imagenDocker",
@@ -52,27 +43,40 @@ const CAMPOS_FORMULARIO = [
   "almacenamientoAsignado",
 ] as const;
 
-function nombreCampoFormulario(campo: string): keyof DatosFormularioCrearServicio | null {
+const RAICES_PASO_DOS = ["puertos", "variablesEntorno", "volumenes"];
+
+// Traduce el `campo` en notacion de punto que devuelve el backend (contrato
+// seccion 1.4, por ejemplo "configuracion.puertos.0.host") a la ruta del
+// formulario, e indica en que paso del asistente vive para poder mostrarlo.
+function ubicarCampoFormulario(campo: string): { ruta: RutaCampo; paso: 1 | 2 } | null {
   const sinPrefijo = campo.startsWith("configuracion.")
     ? campo.slice("configuracion.".length)
     : campo;
-  return (CAMPOS_FORMULARIO as readonly string[]).includes(sinPrefijo)
-    ? (sinPrefijo as keyof DatosFormularioCrearServicio)
-    : null;
+  const partes = sinPrefijo.split(".");
+  const raiz = partes[0];
+  if (!raiz) return null;
+
+  if ((CAMPOS_PASO_UNO as readonly string[]).includes(raiz)) {
+    return partes.length === 1 ? { ruta: raiz as RutaCampo, paso: 1 } : null;
+  }
+
+  // Las listas del paso 2 solo se pueden marcar cuando el backend indica el
+  // indice del elemento; variablesEntorno viaja como diccionario, asi que sus
+  // errores no tienen equivalente en la lista de pares del formulario.
+  if (RAICES_PASO_DOS.includes(raiz) && partes.length === 3 && /^\d+$/.test(partes[1] ?? "")) {
+    return { ruta: sinPrefijo as RutaCampo, paso: 2 };
+  }
+
+  return null;
 }
 
 export function CrearServicioPage() {
+  const [paso, setPaso] = useState<1 | 2>(1);
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
   const navegar = useNavigate();
-  const { data: imagenes } = useImagenesDocker();
   const crearServicio = useCrearServicio();
 
-  const {
-    register,
-    handleSubmit,
-    setError,
-    formState: { errors },
-  } = useForm<DatosFormularioCrearServicio>({
+  const metodos = useForm<DatosFormularioCrearServicio>({
     resolver: zodResolver(esquemaCrearServicio),
     mode: "onBlur",
     reValidateMode: "onChange",
@@ -80,8 +84,24 @@ export function CrearServicioPage() {
       nombre: "",
       descripcion: "",
       imagenDocker: "",
+      puertos: [],
+      variablesEntorno: [],
+      volumenes: [],
     },
   });
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    trigger,
+    formState: { errors },
+  } = metodos;
+
+  async function alPulsarSiguiente() {
+    const esValido = await trigger([...CAMPOS_PASO_UNO]);
+    if (esValido) setPaso(2);
+  }
 
   async function alEnviar(datos: DatosFormularioCrearServicio) {
     setErrorEnvio(null);
@@ -94,16 +114,21 @@ export function CrearServicioPage() {
           cpuAsignado: datos.cpuAsignado,
           memoriaAsignada: datos.memoriaAsignada,
           almacenamientoAsignado: datos.almacenamientoAsignado,
-          puertos: [],
-          variablesEntorno: {},
-          volumenes: [],
+          puertos: datos.puertos,
+          variablesEntorno: aRegistroVariables(datos.variablesEntorno),
+          volumenes: datos.volumenes,
         },
       });
       navegar(`/servicios/${servicio.idServicio}`, { replace: true });
     } catch (error) {
       const errorApi = normalizarErrorApi(error);
 
-      if (isAxiosError(error) && error.response?.status === 422 && errorApi.solicitado && errorApi.disponible) {
+      if (
+        isAxiosError(error) &&
+        error.response?.status === 422 &&
+        errorApi.solicitado &&
+        errorApi.disponible
+      ) {
         const { solicitado, disponible } = errorApi;
         setErrorEnvio(
           `${errorApi.mensaje}. Solicitado: ${solicitado.cpu} CPU, ${solicitado.memoria} MB memoria, ` +
@@ -113,14 +138,30 @@ export function CrearServicioPage() {
         return;
       }
 
+      // DT-16 del backend: el nombre solo esta reservado entre los servicios
+      // activos del usuario. El error es del paso 1, asi que hay que volver a el.
+      if (isAxiosError(error) && error.response?.status === 409) {
+        setError("nombre", { message: errorApi.mensaje });
+        setPaso(1);
+        return;
+      }
+
       if (isAxiosError(error) && error.response?.status === 400) {
-        const asignado = errorApi.detalles?.some((detalle) => {
-          const campo = nombreCampoFormulario(detalle.campo);
-          if (!campo) return false;
-          setError(campo, { message: detalle.mensaje });
-          return true;
-        });
-        if (asignado) return;
+        let pasoConError: 1 | 2 | null = null;
+        for (const detalle of errorApi.detalles ?? []) {
+          const ubicacion = ubicarCampoFormulario(detalle.campo);
+          if (!ubicacion) continue;
+          setError(ubicacion.ruta, { message: detalle.mensaje });
+          // Si el error mas temprano esta en el paso 1, hay que volver a el
+          // para que el usuario pueda verlo.
+          if (pasoConError === null || ubicacion.paso < pasoConError) {
+            pasoConError = ubicacion.paso;
+          }
+        }
+        if (pasoConError !== null) {
+          setPaso(pasoConError);
+          return;
+        }
       }
 
       setErrorEnvio(errorApi.mensaje);
@@ -130,55 +171,54 @@ export function CrearServicioPage() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-md p-lg">
       <h1 className="text-2xl font-semibold text-texto">Crear servicio</h1>
-      <form onSubmit={handleSubmit(alEnviar)} noValidate className="flex flex-col gap-md">
-        <CampoTexto etiqueta="Nombre" error={errors.nombre?.message} {...register("nombre")} />
-        <CampoTexto
-          etiqueta="Descripcion"
-          error={errors.descripcion?.message}
-          {...register("descripcion")}
-        />
-        <CampoTexto
-          etiqueta="Imagen Docker"
-          list="imagenes-docker"
-          textoAyuda="Elige una imagen sugerida o escribe otra, por ejemplo postgres:16-alpine"
-          error={errors.imagenDocker?.message}
-          {...register("imagenDocker")}
-        />
-        <datalist id="imagenes-docker">
-          {imagenes?.map((imagen) => (
-            <option key={imagen.nombre} value={imagen.nombre}>
-              {imagen.descripcion}
-            </option>
-          ))}
-        </datalist>
-        <CampoTexto
-          etiqueta="CPU (nucleos)"
-          type="number"
-          step="0.5"
-          error={errors.cpuAsignado?.message}
-          {...register("cpuAsignado", { valueAsNumber: true })}
-        />
-        <CampoTexto
-          etiqueta="Memoria (MB)"
-          type="number"
-          error={errors.memoriaAsignada?.message}
-          {...register("memoriaAsignada", { valueAsNumber: true })}
-        />
-        <CampoTexto
-          etiqueta="Almacenamiento (MB)"
-          type="number"
-          error={errors.almacenamientoAsignado?.message}
-          {...register("almacenamientoAsignado", { valueAsNumber: true })}
-        />
-        {errorEnvio ? (
-          <p role="alert" className="text-sm text-peligro">
-            {errorEnvio}
-          </p>
-        ) : null}
-        <Boton type="submit" cargando={crearServicio.isPending}>
-          Crear servicio
-        </Boton>
-      </form>
+      <h2 aria-live="polite" className="text-sm font-medium text-texto-secundario">
+        {paso === 1
+          ? "Paso 1 de 2: Datos del servicio"
+          : "Paso 2 de 2: Configuracion avanzada"}
+      </h2>
+
+      <FormProvider {...metodos}>
+        <form onSubmit={handleSubmit(alEnviar)} noValidate className="flex flex-col gap-md">
+          {paso === 1 ? (
+            <>
+              <CampoTexto
+                etiqueta="Nombre"
+                textoAyuda="Debe ser distinto al de tus otros servicios activos. Al eliminar un servicio su nombre vuelve a quedar libre."
+                error={errors.nombre?.message}
+                {...register("nombre")}
+              />
+              <CampoTexto
+                etiqueta="Descripcion"
+                error={errors.descripcion?.message}
+                {...register("descripcion")}
+              />
+              <CamposRecursos />
+              <Boton type="button" onClick={() => void alPulsarSiguiente()}>
+                Siguiente
+              </Boton>
+            </>
+          ) : (
+            <>
+              <PasoConfiguracionAvanzada />
+
+              {errorEnvio ? (
+                <p role="alert" className="text-sm text-peligro">
+                  {errorEnvio}
+                </p>
+              ) : null}
+
+              <div className="flex flex-wrap gap-sm">
+                <Boton type="button" variante="secundario" onClick={() => setPaso(1)}>
+                  Atras
+                </Boton>
+                <Boton type="submit" cargando={crearServicio.isPending}>
+                  Crear servicio
+                </Boton>
+              </div>
+            </>
+          )}
+        </form>
+      </FormProvider>
     </main>
   );
 }

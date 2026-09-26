@@ -1,6 +1,6 @@
 // Cubre: RF-05, RF-06, RF-07, RF-09, RF-17 — CU-03
 import { describe, it, expect, afterEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import App from "@/App";
@@ -32,6 +32,15 @@ describe("Crear y ver un servicio", () => {
       idServicio: 9,
       nombre: "postgres-clase-05",
       estado: "configurado",
+      configuracion: {
+        imagenDocker: "postgres:16-alpine",
+        cpuAsignado: 1,
+        memoriaAsignada: 512,
+        almacenamientoAsignado: 1024,
+        puertos: [{ host: 5432, contenedor: 5432, protocolo: "tcp" }],
+        variablesEntorno: { POSTGRES_PASSWORD: "ejemplo" },
+        volumenes: [],
+      },
     });
 
     servidorMock.use(
@@ -48,8 +57,19 @@ describe("Crear y ver un servicio", () => {
     await usuario.type(screen.getByLabelText(/cpu/i), "1");
     await usuario.type(screen.getByLabelText(/memoria/i), "512");
     await usuario.type(screen.getByLabelText(/almacenamiento/i), "1024");
-    await usuario.click(screen.getByRole("button", { name: /crear servicio/i }));
+    await usuario.click(screen.getByRole("button", { name: /siguiente/i }));
 
-    expect(await screen.findByRole("heading", { name: "postgres-clase-05" })).toBeInTheDocument();
+    await usuario.click(await screen.findByRole("button", { name: /agregar puerto/i }));
+    const filaPuerto = screen.getByRole("group", { name: /puerto 1/i });
+    await usuario.type(within(filaPuerto).getByLabelText(/puerto del host/i), "5432");
+    await usuario.type(within(filaPuerto).getByLabelText(/puerto del contenedor/i), "5432");
+
+    await usuario.click(screen.getByRole("button", { name: /^crear servicio$/i }));
+
+    expect(
+      await screen.findByRole("heading", { name: "postgres-clase-05" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("5432 -> 5432/tcp")).toBeInTheDocument();
+    expect(screen.getByText("POSTGRES_PASSWORD = ejemplo")).toBeInTheDocument();
   });
 });

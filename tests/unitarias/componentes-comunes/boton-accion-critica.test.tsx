@@ -50,4 +50,29 @@ describe("BotonAccionCritica", () => {
 
     expect(onConfirmar).toHaveBeenCalledTimes(1);
   });
+
+  it("admite contenido enriquecido en la descripcion del dialogo", async () => {
+    const usuario = userEvent.setup();
+    render(
+      <BotonAccionCritica
+        textoBoton="Desplegar"
+        tituloDialogo="Volver a desplegar"
+        descripcionDialogo={
+          <>
+            <p>Se recreara el contenedor.</p>
+            <ul>
+              <li>/var/lib/postgresql/data</li>
+            </ul>
+          </>
+        }
+        textoConfirmacion="Desplegar"
+        onConfirmar={vi.fn()}
+      />
+    );
+
+    await usuario.click(screen.getByRole("button", { name: "Desplegar" }));
+
+    expect(screen.getByText(/se recreara el contenedor/i)).toBeInTheDocument();
+    expect(screen.getByRole("listitem")).toHaveTextContent("/var/lib/postgresql/data");
+  });
 });

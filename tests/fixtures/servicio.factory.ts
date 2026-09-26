@@ -1,6 +1,41 @@
-import type { Servicio, ServicioDetalle } from "@/tipos/servicio";
+import type {
+  EstadoContenedor,
+  Servicio,
+  ServicioDetalle,
+  VolumenConTipo,
+  VolumenMontado,
+} from "@/tipos/servicio";
 
 let contador = 0;
+
+export function crearVolumenDePrueba(
+  sobreescrituras: Partial<VolumenConTipo> = {}
+): VolumenConTipo {
+  return {
+    origen: "/datos/pg",
+    destino: "/var/lib/postgresql/data",
+    modo: "rw",
+    tipo: "bind",
+    ...sobreescrituras,
+  };
+}
+
+export function crearVolumenMontadoDePrueba(
+  sobreescrituras: Partial<VolumenMontado> = {}
+): VolumenMontado {
+  return {
+    nombre: "datos-redis",
+    destino: "/data",
+    anonimo: false,
+    ...sobreescrituras,
+  };
+}
+
+export function crearContenedorDePrueba(
+  sobreescrituras: Partial<EstadoContenedor> = {}
+): EstadoContenedor {
+  return { existe: false, volumenes: [], ...sobreescrituras };
+}
 
 export function crearServicioDePrueba(sobreescrituras: Partial<Servicio> = {}): Servicio {
   contador += 1;
@@ -28,6 +63,7 @@ export function crearServicioDetalleDePrueba(
 ): ServicioDetalle {
   return {
     ...crearServicioDePrueba(),
+    contenedor: crearContenedorDePrueba(),
     registros: [],
     ...sobreescrituras,
   };

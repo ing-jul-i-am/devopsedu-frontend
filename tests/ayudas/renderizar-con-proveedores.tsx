@@ -10,7 +10,12 @@ import type { ReactElement } from "react";
  */
 export function renderizarConProveedores(
   ui: ReactElement,
-  opciones: { rutaInicial?: string; rutaPatron?: string } = {}
+  opciones: {
+    rutaInicial?: string;
+    rutaPatron?: string;
+    /** State de navegacion, para paginas que reaccionan a como se llego a ellas. */
+    estadoNavegacion?: unknown;
+  } = {}
 ) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -24,9 +29,14 @@ export function renderizarConProveedores(
     ui
   );
 
+  const entrada =
+    opciones.estadoNavegacion === undefined
+      ? (opciones.rutaInicial ?? "/")
+      : { pathname: opciones.rutaInicial ?? "/", state: opciones.estadoNavegacion };
+
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[opciones.rutaInicial ?? "/"]}>{contenido}</MemoryRouter>
+      <MemoryRouter initialEntries={[entrada]}>{contenido}</MemoryRouter>
     </QueryClientProvider>
   );
 }
