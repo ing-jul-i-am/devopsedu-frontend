@@ -28,8 +28,8 @@ describe("MiRutaPage", () => {
     const miRuta = crearMiRutaDePrueba({
       progreso: 50,
       modulos: [
-        { idModulo: 3, nombre: "Redes en Docker", ordenSecuencia: 1 },
-        { idModulo: 1, nombre: "Introduccion a contenedores", ordenSecuencia: 2 },
+        { idModulo: 3, nombre: "Redes en Docker", ordenSecuencia: 1, estado: "completado" },
+        { idModulo: 1, nombre: "Introduccion a contenedores", ordenSecuencia: 2, estado: "en_progreso" },
       ],
     });
     servidorMock.use(http.get(rutaMiRuta, () => HttpResponse.json(miRuta)));
@@ -41,6 +41,54 @@ describe("MiRutaPage", () => {
     expect(modulos[1]).toHaveTextContent(/introduccion a contenedores/i);
     expect(modulos[0]).toHaveAttribute("href", "/aprendizaje/modulos/3");
     expect(screen.getByText(/50%/)).toBeInTheDocument();
+  });
+
+  it("muestra el modulo completado como enlace y con su insignia de estado", async () => {
+    const miRuta = crearMiRutaDePrueba({
+      modulos: [
+        { idModulo: 3, nombre: "Redes en Docker", ordenSecuencia: 1, estado: "completado" },
+      ],
+    });
+    servidorMock.use(http.get(rutaMiRuta, () => HttpResponse.json(miRuta)));
+
+    renderizarConProveedores(<MiRutaPage />);
+
+    const enlace = await screen.findByRole("link", { name: /redes en docker/i });
+    expect(enlace).toHaveAttribute("href", "/aprendizaje/modulos/3");
+    expect(screen.getByText(/completado/i)).toBeInTheDocument();
+  });
+
+  it("el primer modulo de la ruta siempre es accesible aunque no se haya iniciado", async () => {
+    const miRuta = crearMiRutaDePrueba({
+      modulos: [
+        { idModulo: 3, nombre: "Redes en Docker", ordenSecuencia: 1, estado: "sin_iniciar" },
+      ],
+    });
+    servidorMock.use(http.get(rutaMiRuta, () => HttpResponse.json(miRuta)));
+
+    renderizarConProveedores(<MiRutaPage />);
+
+    expect(await screen.findByRole("link", { name: /redes en docker/i })).toHaveAttribute(
+      "href",
+      "/aprendizaje/modulos/3"
+    );
+  });
+
+  it("bloquea el acceso a un modulo cuyo anterior no esta completado", async () => {
+    const miRuta = crearMiRutaDePrueba({
+      modulos: [
+        { idModulo: 3, nombre: "Redes en Docker", ordenSecuencia: 1, estado: "en_progreso" },
+        { idModulo: 1, nombre: "Imagenes en Docker", ordenSecuencia: 2, estado: "sin_iniciar" },
+      ],
+    });
+    servidorMock.use(http.get(rutaMiRuta, () => HttpResponse.json(miRuta)));
+
+    renderizarConProveedores(<MiRutaPage />);
+
+    await screen.findByRole("link", { name: /redes en docker/i });
+    expect(screen.queryByRole("link", { name: /imagenes en docker/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/imagenes en docker/i)).toBeInTheDocument();
+    expect(screen.getByText(/completa el modulo anterior/i)).toBeInTheDocument();
   });
 
   it("muestra un mensaje cuando el estudiante no tiene ninguna ruta asignada", async () => {

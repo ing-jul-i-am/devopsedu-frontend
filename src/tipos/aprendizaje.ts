@@ -63,10 +63,13 @@ export interface RutaAsignada {
   modulos: ModuloRutaAsignada[];
 }
 
+export type EstadoModuloRuta = "completado" | "en_progreso" | "sin_iniciar";
+
 export interface ModuloMiRuta {
   idModulo: number;
   nombre: string;
   ordenSecuencia: number;
+  estado: EstadoModuloRuta;
 }
 
 export interface MiRuta {

@@ -20,6 +20,8 @@ function rutaEvaluacion(id: number | string) {
   return `${configuracion.prefijoApi}/aprendizaje/modulos/${id}/evaluacion`;
 }
 
+const rutaMiRuta = `${configuracion.prefijoApi}/aprendizaje/mi-ruta`;
+
 describe("ModuloAprendizajePage", () => {
   it("muestra un indicador de carga inicial", () => {
     servidorMock.use(
@@ -174,5 +176,64 @@ describe("ModuloAprendizajePage", () => {
 
     await screen.findByText("Introduccion a contenedores");
     expect(screen.queryByRole("link", { name: /ver evaluacion/i })).not.toBeInTheDocument();
+  });
+
+  it("bloquea el acceso y no marca el modulo como iniciado si el anterior no esta completado", async () => {
+    let vecesLlamadoIniciar = 0;
+    servidorMock.use(
+      http.post(rutaIniciar(3), () => {
+        vecesLlamadoIniciar += 1;
+        return HttpResponse.json({ mensaje: "Modulo iniciado" });
+      }),
+      http.get(rutaModulo(3), () => HttpResponse.json(crearModuloConContenidoDePrueba())),
+      http.get(rutaMiRuta, () =>
+        HttpResponse.json({
+          idRuta: 1,
+          progreso: 0,
+          fechaAsignacion: "2026-08-28T00:00:00.000Z",
+          modulos: [
+            { idModulo: 1, nombre: "Modulo previo", ordenSecuencia: 1, estado: "en_progreso" },
+            { idModulo: 3, nombre: "Introduccion a contenedores", ordenSecuencia: 2, estado: "sin_iniciar" },
+          ],
+        })
+      )
+    );
+
+    renderizarConProveedores(<ModuloAprendizajePage />, {
+      rutaInicial: "/aprendizaje/modulos/3",
+      rutaPatron: "/aprendizaje/modulos/:idModulo",
+    });
+
+    expect(await screen.findByText(/completa el modulo anterior/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText("Los contenedores empaquetan una aplicacion.")
+    ).not.toBeInTheDocument();
+    expect(vecesLlamadoIniciar).toBe(0);
+  });
+
+  it("permite el acceso cuando el modulo anterior si esta completado", async () => {
+    servidorMock.use(
+      http.post(rutaIniciar(3), () => HttpResponse.json({ mensaje: "Modulo iniciado" })),
+      http.get(rutaModulo(3), () => HttpResponse.json(crearModuloConContenidoDePrueba())),
+      http.get(rutaMiRuta, () =>
+        HttpResponse.json({
+          idRuta: 1,
+          progreso: 50,
+          fechaAsignacion: "2026-08-28T00:00:00.000Z",
+          modulos: [
+            { idModulo: 1, nombre: "Modulo previo", ordenSecuencia: 1, estado: "completado" },
+            { idModulo: 3, nombre: "Introduccion a contenedores", ordenSecuencia: 2, estado: "sin_iniciar" },
+          ],
+        })
+      )
+    );
+
+    renderizarConProveedores(<ModuloAprendizajePage />, {
+      rutaInicial: "/aprendizaje/modulos/3",
+      rutaPatron: "/aprendizaje/modulos/:idModulo",
+    });
+
+    expect(await screen.findByText("Introduccion a contenedores")).toBeInTheDocument();
+    expect(screen.queryByText(/completa el modulo anterior/i)).not.toBeInTheDocument();
   });
 });

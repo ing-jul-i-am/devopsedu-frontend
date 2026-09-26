@@ -25,7 +25,9 @@ export function crearMiRutaDePrueba(sobreescrituras: Partial<MiRuta> = {}): MiRu
     idRuta: 1,
     progreso: 0,
     fechaAsignacion: "2026-08-28T00:00:00.000Z",
-    modulos: [{ idModulo: 1, nombre: "Introduccion a contenedores", ordenSecuencia: 1 }],
+    modulos: [
+      { idModulo: 1, nombre: "Introduccion a contenedores", ordenSecuencia: 1, estado: "sin_iniciar" },
+    ],
     ...sobreescrituras,
   };
 }

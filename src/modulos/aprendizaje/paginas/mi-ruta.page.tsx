@@ -2,9 +2,13 @@
 // Cubre: RF-22, RNF-05 — CU-13
 import { Link } from "react-router-dom";
 import { useMiRuta } from "../hooks/use-mi-ruta";
+import { InsigniaEstadoModulo } from "../componentes/insignia-estado-modulo";
 
 export function MiRutaPage() {
   const { data: miRuta, isLoading, isError } = useMiRuta();
+  const modulosOrdenados = miRuta
+    ? [...miRuta.modulos].sort((a, b) => a.ordenSecuencia - b.ordenSecuencia)
+    : [];
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-md p-lg">
@@ -32,18 +36,32 @@ export function MiRutaPage() {
         <div className="flex flex-col gap-sm">
           <p className="text-sm text-texto-secundario">Progreso: {miRuta.progreso}%</p>
           <ol className="flex flex-col gap-sm">
-            {[...miRuta.modulos]
-              .sort((a, b) => a.ordenSecuencia - b.ordenSecuencia)
-              .map((modulo) => (
+            {modulosOrdenados.map((modulo, indice) => {
+              const anterior = modulosOrdenados[indice - 1];
+              const desbloqueado = !anterior || anterior.estado === "completado";
+
+              return (
                 <li key={modulo.idModulo}>
-                  <Link
-                    to={`/aprendizaje/modulos/${modulo.idModulo}`}
-                    className="block rounded-md border border-borde p-sm text-texto hover:bg-fondo"
-                  >
-                    {modulo.nombre}
-                  </Link>
+                  {desbloqueado ? (
+                    <Link
+                      to={`/aprendizaje/modulos/${modulo.idModulo}`}
+                      className="flex items-center justify-between gap-sm rounded-md border border-borde p-sm text-texto hover:bg-fondo"
+                    >
+                      <span>{modulo.nombre}</span>
+                      <InsigniaEstadoModulo estado={modulo.estado} />
+                    </Link>
+                  ) : (
+                    <div className="flex flex-col gap-xs rounded-md border border-borde bg-fondo p-sm text-texto-secundario">
+                      <div className="flex items-center justify-between gap-sm">
+                        <span>{modulo.nombre}</span>
+                        <InsigniaEstadoModulo estado={modulo.estado} />
+                      </div>
+                      <p className="text-xs">Completa el modulo anterior para desbloquear este.</p>
+                    </div>
+                  )}
                 </li>
-              ))}
+              );
+            })}
           </ol>
         </div>
       ) : null}
