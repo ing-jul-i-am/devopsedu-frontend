@@ -12,12 +12,15 @@
 | Etapa 2 — Módulo Servicios | Completa | `83ffcd4` |
 | Mejora transversal — Navegación y panel principal (RNF-03) | Completa | `dec4ebc` |
 | Etapa 3 — Módulo Monitoreo | Completa | `1e237f5` |
-| Etapa 4 — Módulo Aprendizaje (estudiante) | Completa | (pendiente de commit) |
-| Etapa 5 — Módulo Administración (parcial: módulos y estudiantes) | Completa; Reportes/Exportación pendientes (backend no implementado) | (pendiente de commit) |
+| Etapa 4 — Módulo Aprendizaje (estudiante) | Completa | `5d08be3`, `90417cb`, `14fb0e8` |
+| Etapa 5 — Módulo Administración (parcial: módulos y estudiantes) | Completa; Reportes/Exportación pendientes (backend no implementado) | `5d08be3` |
+| Mejora transversal — Configuración avanzada de servicios y nuevo ciclo de vida de contenedores (DT-13 a DT-16) | Completa | `d315318` |
 
-**Próximo paso concreto:** el backend avanzó a la rama `cuarta-semana` (ver actualización de `docs/contrato-api.md`) e implementó de verdad `/api/modulos`, `/api/rutas` y `/api/aprendizaje/*` (Etapa 6 del backend, RF-20 a RF-24), además de `/api/usuarios` (DT-08 del backend, reseteo de contraseña). Esto permitió construir la Etapa 4 y la mayor parte de la Etapa 5 **integradas contra el backend real**, igual que las Etapas 1-3 — ya no aplica la premisa original de construirlas contra mocks especulativos. Lo único que sigue pendiente de la Etapa 5 es `/api/reportes` (RF-25, RF-26, CU-15, CU-16): el backend todavía no lo implementa (ver sección 10 de `docs/contrato-api.md`), así que **Reportes** y **Exportación** quedan bloqueadas hasta que el backend avance a la Etapa 7. Próximo paso cuando eso ocurra: repetir el mismo procedimiento (leer el contrato actualizado, confirmar decisiones pendientes con el usuario, TDD por vista) para esas dos vistas.
+**Próximo paso concreto (actualizado 2026-10-10):** todo lo construible contra el backend actual está implementado y verificado manualmente por el usuario contra el backend real (Etapas 3, 4 y 5, el bloqueo secuencial de "Mi ruta", el reseteo de contraseña y el flujo de configuración avanzada de `d315318`). Lo único pendiente del catálogo es `/api/reportes` (RF-25, RF-26, CU-15, CU-16): el backend todavía no lo implementa (ver sección 10 de `docs/contrato-api.md`), así que **Reportes** y **Exportación** quedan bloqueadas hasta que el backend avance a su Etapa 7. Próximo paso cuando eso ocurra: repetir el mismo procedimiento (leer el contrato actualizado, confirmar decisiones pendientes con el usuario, TDD por vista) para esas dos vistas.
 
-Antes de continuar con cualquier trabajo nuevo: correr `npm run dev` contra el backend real y verificar manualmente las vistas de Aprendizaje (como estudiante, con una ruta ya asignada) y Administración (como docente) — no se ejecutó verificación manual en esta sesión porque no había una instancia del backend disponible en este entorno.
+Otros pendientes, también bloqueados por el backend: edición de perfil (RF-04, ver `DT-03`), endpoint de listado de usuarios para reemplazar el campo manual de `idUsuario` (ver `DT-09`) y la comparación exacta de `imagenDocker` en la evaluación de actividades (ver `DT-14`).
+
+Mejoras opcionales detectadas en la revisión del 2026-10-10, sin urgencia: el bundle de producción pesa ~1.48 MB (Vite advierte por superar 500 kB; candidatos a `React.lazy`: el editor TipTap y las gráficas de Recharts), y React Router emite advertencias de las banderas `v7_startTransition` y `v7_relativeSplatPath` en las pruebas.
 
 **Hallazgos de la verificación manual (usuario, 2026-09-12) y su resolución:**
 
@@ -25,7 +28,7 @@ Antes de continuar con cualquier trabajo nuevo: correr `npm run dev` contra el b
 2. y 3. No había bloqueo secuencial entre módulos ni indicador visual de progreso por módulo en "Mi ruta" — **corregido**: el usuario agregó `estado` por módulo en `GET /api/aprendizaje/mi-ruta` (backend, `DT-13`; frontend, resolución registrada en `DT-11`). `mi-ruta.page.tsx` colorea cada módulo (verde/amarillo/gris) y reemplaza el enlace por un mensaje cuando el predecesor inmediato no está `completado`; `modulo-aprendizaje.page.tsx` repite la misma verificación para que el bloqueo no se evada escribiendo la URL directamente.
 4. El reseteo de contraseña fallaba por CORS (`PATCH` no estaba en `Access-Control-Allow-Methods` de `devopsedu-backend/src/api/middlewares/cors.ts`) — **corregido por el usuario en su sesión del backend**, confirmado leyendo el archivo (ahora incluye `PATCH`).
 
-**Próximo paso concreto (actualizado):** pendiente de que el usuario verifique manualmente con `npm run dev` contra el backend real: bloqueo secuencial en "Mi ruta" y en el acceso directo por URL, colores de estado, y que el reseteo de contraseña ya funcione sin error de CORS. Sin verificación manual pendiente de código en este momento — el resto del catálogo (RF-25/RF-26, Reportes y Exportación) sigue bloqueado por `/api/reportes`, que el backend todavía no implementa.
+Las cuatro correcciones fueron verificadas manualmente por el usuario contra el backend real (confirmado el 2026-10-10).
 
 ## Cómo retomar el trabajo en una sesión nueva
 
@@ -129,13 +132,13 @@ El menú lateral (`ENLACES` en `barra-navegacion.tsx`) solo enlaza a las áreas 
 - [x] Enlaces "Histórico" y "Gráficas de métricas" agregados a `ENLACES` en `barra-navegacion.tsx`; rutas anidadas en `DisenoAutenticado` + `GuardaRol` (mismo grupo de roles que Servicios, ya que ambas vistas dependen de `GET /api/servicios`).
 - [x] Handler de MSW por defecto para `GET /api/servicios/:idServicio/metricas` en `tests/mocks/handlers.ts`.
 - [x] Verificación: `npm test` (104 pruebas unitarias + integración), `npm run test:coverage` (98% líneas/statements, 92% ramas, 92% funciones), `npm run build`, `npm run lint` — todo en verde.
-- [ ] Verificación manual con `npm run dev` contra el backend real — pendiente de que el usuario la ejecute.
+- [x] Verificación manual con `npm run dev` contra el backend real — confirmada por el usuario (2026-10-10).
 
 No se contempló la tercera forma de error de `errores-api.ts` (`400` de query sin `detalles`, sección 3.7 del contrato) porque esta etapa no expone filtros `desde`/`hasta` en la UI — la llamada a métricas se hace sin query params. Si se agregan filtros de rango de fechas más adelante, ese caso de error debe cubrirse entonces.
 
 ---
 
-## Etapa 4 — Módulo Aprendizaje del estudiante (RF-22 a RF-24, CU-12 a CU-14) — COMPLETA
+## Etapa 4 — Módulo Aprendizaje del estudiante (RF-22 a RF-24, CU-12 a CU-14) — COMPLETA (`5d08be3`, `90417cb`, `14fb0e8`)
 
 El backend avanzó a la rama `cuarta-semana` e implementó de verdad `/api/aprendizaje/*` (sección 6 del contrato actualizado), incluyendo los endpoints `GET /api/modulos/:idModulo` (4.2b) y `GET /api/aprendizaje/modulos/:idModulo` (6.1b) que resolvieron un vacío detectado en la primera revisión del contrato (no había forma de que el estudiante consultara el contenido educativo de un módulo). Por eso esta etapa se construyó **integrada contra el backend real**, no contra mocks especulativos como preveía la versión anterior de este plan.
 
@@ -146,11 +149,12 @@ El backend avanzó a la rama `cuarta-semana` e implementó de verdad `/api/apren
 - [x] `ENLACES` en `barra-navegacion.tsx` extendido con filtrado por rol (nuevo campo `rolesPermitidos` por enlace): "Mi ruta" solo visible para `estudiante`. Nuevo bloque `GuardaRol` en `rutas.tsx` para las tres rutas de este módulo.
 - [x] Handlers de MSW por defecto para los 4 endpoints de `/api/aprendizaje/*` en `tests/mocks/handlers.ts`.
 - [x] Verificación: `npm test` (165 pruebas unitarias + integración en total tras Etapas 4 y 5), `npm run test:coverage` (≈98% líneas/statements, 91% ramas, 92% funciones — sobre los umbrales 75/75/70/75), `npm run build`, `npm run lint` — todo en verde.
-- [ ] Verificación manual con `npm run dev` contra el backend real — pendiente de que el usuario la ejecute (no había una instancia del backend disponible en el entorno de esta sesión).
+- [x] Verificación manual con `npm run dev` contra el backend real — confirmada por el usuario (2026-10-10).
+- [x] Correcciones posteriores a la verificación manual del 2026-09-12: `retry: false` por defecto en `ProveedorQuery` (`90417cb`, `DT-12`) y estado por módulo con bloqueo secuencial en "Mi ruta" (`14fb0e8`, resolución de `DT-11`).
 
 ---
 
-## Etapa 5 — Módulo Administración (RF-20, RF-21, CU-10, CU-11) — COMPLETA (parcial); Reportes/Exportación pendientes
+## Etapa 5 — Módulo Administración (RF-20, RF-21, CU-10, CU-11) — COMPLETA (parcial, `5d08be3`); Reportes/Exportación pendientes
 
 El backend implementó `/api/modulos` y `/api/rutas` (Etapa 6 del backend) además de `/api/usuarios` (DT-08 del backend). `/api/reportes` (RF-25, RF-26, CU-15, CU-16) **sigue sin implementarse** — ver sección 10 del contrato — así que Reportes y Exportación quedan fuera de esta etapa hasta que el backend avance a su Etapa 7.
 
@@ -165,7 +169,7 @@ El backend implementó `/api/modulos` y `/api/rutas` (Etapa 6 del backend) adem�
 - [x] Handlers de MSW por defecto para los 6 endpoints de `/api/modulos`, `/api/rutas` y `/api/usuarios` en `tests/mocks/handlers.ts`.
 - [x] Nuevas dependencias `react-markdown` (lectura de Markdown, `DT-07`) y `@tiptap/react` + `@tiptap/starter-kit` + `@tiptap/pm` + `tiptap-markdown` (editor WYSIWYG, `DT-08`), ambas justificadas en `docs/decisiones-tecnicas.md` (RNF-20).
 - [x] Verificación: incluida en la misma corrida de la Etapa 4 (`npm test`, `npm run test:coverage`, `npm run build`, `npm run lint` — todo en verde).
-- [ ] Verificación manual con `npm run dev` contra el backend real (como docente) — pendiente de que el usuario la ejecute.
+- [x] Verificación manual con `npm run dev` contra el backend real (como docente) — confirmada por el usuario (2026-10-10).
 
 **Pendiente de la Etapa 5 (bloqueado por el backend):**
 
@@ -174,10 +178,24 @@ El backend implementó `/api/modulos` y `/api/rutas` (Etapa 6 del backend) adem�
 
 ---
 
+## Mejora transversal — Configuración avanzada de servicios y nuevo ciclo de vida de contenedores (RF-05 a RF-08, RF-11, RF-14, RF-17, RF-23, CU-03, CU-05 a CU-07, CU-12) — COMPLETA (`d315318`)
+
+No es una etapa del plan original. Surgió al probar la calificación automática de actividades: con `DT-04` el asistente enviaba puertos y volúmenes vacíos, lo que hacía imposible aprobar actividades con `puertosMinimos` o `volumenesMinimos`. Coincidió con el cambio del ciclo de vida de contenedores en el backend (DT-15, DT-16 y DT-17 del backend), sincronizado en `docs/contrato-api.md` en `d3f7df0`.
+
+- [x] **Asistente de creación en dos pasos** (`crear-servicio.page.tsx`) con editores de puertos, variables de entorno y volúmenes (`editor-puertos.tsx`, `editor-variables-entorno.tsx`, `editor-volumenes.tsx`, con `useFieldArray`) y validación compartida en `src/modulos/servicios/esquema-configuracion.ts` — ver `DT-13`, que supera a `DT-04`.
+- [x] **Editar configuración** (`editar-configuracion.page.tsx`, ruta `/servicios/:idServicio/configuracion`) — RF-08. `PUT /api/servicios/:idServicio/configuracion`, reutilizando los mismos dos pasos (`campos-recursos.tsx`, `paso-configuracion-avanzada.tsx`). La imagen Docker vuelve a ser editable (`DT-16`).
+- [x] **Detalle de servicio**: resumen de la configuración vigente (`resumen-configuracion.tsx`), volúmenes realmente montados (`volumenes-montados.tsx`), `Desplegar` como acción crítica cuando existe un contenedor previo y aviso de pérdida de datos construido con `contenedor.volumenes` (`aviso-perdida-datos.tsx`) — ver `DT-15`. Tras desplegar o eliminar se muestra qué volúmenes se eliminaron o conservaron.
+- [x] **Formulario de actividad** con las cinco condiciones de aprobación opcionales (`formulario-actividad.tsx`) — ver `DT-14`.
+- [x] Verificación manual con `npm run dev` contra el backend real — confirmada por el usuario (2026-10-10).
+- [x] Corrección posterior (2026-10-10): la prueba "elimina el servicio tras confirmar en el dialogo" de `detalle-servicio.page.test.tsx` simulaba `DELETE /api/servicios/:idServicio` con la forma anterior a DT-15 del backend (sin `recreado`, `volumenesEliminados` ni `volumenesOmitidos`). La página fallaba con un `TypeError` que Vitest reportaba como "Unhandled error" mientras la prueba seguía en verde. Se actualizó el mock a la forma vigente del contrato. Suite tras la corrección: 262 pruebas en 53 archivos, sin errores no capturados; cobertura 98.4% líneas/statements, 91% ramas, 93% funciones.
+
+---
+
 ## Verificación end-to-end del plan (aplica a cada etapa)
 
 - `npm test` pasa completo y `npm run test:coverage` no cae de los umbrales (75/75/70/75).
-- Cada vista nueva se verifica manualmente con `npm run dev` (contra backend real en Etapas 1-3, contra MSW en Etapas 4-5).
+- Cada vista nueva se verifica manualmente con `npm run dev` contra el backend real.
+- La salida de `npm test` no debe reportar "Unhandled errors": Vitest los muestra aparte y una prueba puede seguir en verde aunque el componente haya fallado.
 - `npm run build` sin errores de TypeScript estricto.
 - Cada commit sigue el formato de `trazabilidad-requerimientos`; cada archivo de vista/prueba lleva cabecera con RF/CU.
 - Las decisiones técnicas nuevas (`DT-02` en adelante) se registran en `docs/decisiones-tecnicas.md` antes de cerrar la etapa correspondiente, y este archivo (`docs/plan-de-desarrollo.md`) se actualiza marcando lo completado y moviendo el "Próximo paso concreto".
