@@ -169,11 +169,9 @@ describe("DetalleServicioPage", () => {
       http.get(rutaServicio(7), () => HttpResponse.json(servicio)),
       http.delete(rutaServicio(7), () => {
         seElimino = true;
-        return HttpResponse.json({
-          idServicio: 7,
-          nombre: servicio.nombre,
-          estado: "eliminado",
-        });
+        return HttpResponse.json(
+          resultadoDePrueba({ nombre: servicio.nombre, estado: "eliminado" })
+        );
       })
     );
 
