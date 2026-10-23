@@ -15,12 +15,15 @@
 | Etapa 4 — Módulo Aprendizaje (estudiante) | Completa | `5d08be3`, `90417cb`, `14fb0e8` |
 | Etapa 5 — Módulo Administración (parcial: módulos y estudiantes) | Completa; Reportes/Exportación pendientes (backend no implementado) | `5d08be3` |
 | Mejora transversal — Configuración avanzada de servicios y nuevo ciclo de vida de contenedores (DT-13 a DT-16) | Completa | `d315318` |
+| Mejora transversal — Estado visual de actividades, barra lateral por categorías y panel principal con datos (DT-17) | Completa | `5317f9f`, `29a626e`, `1373b2d`, `b39a284`, `2d57459` |
 
-**Próximo paso concreto (actualizado 2026-10-10):** todo lo construible contra el backend actual está implementado y verificado manualmente por el usuario contra el backend real (Etapas 3, 4 y 5, el bloqueo secuencial de "Mi ruta", el reseteo de contraseña y el flujo de configuración avanzada de `d315318`). Lo único pendiente del catálogo es `/api/reportes` (RF-25, RF-26, CU-15, CU-16): el backend todavía no lo implementa (ver sección 10 de `docs/contrato-api.md`), así que **Reportes** y **Exportación** quedan bloqueadas hasta que el backend avance a su Etapa 7. Próximo paso cuando eso ocurra: repetir el mismo procedimiento (leer el contrato actualizado, confirmar decisiones pendientes con el usuario, TDD por vista) para esas dos vistas.
+**Próximo paso concreto (actualizado 2026-10-23):** todo lo construible contra el backend actual está implementado y verificado manualmente por el usuario contra el backend real, incluidas las vistas de DT-17 (estado de las actividades, barra lateral por categorías y panel principal con datos). En el frontend no queda trabajo pendiente hasta que el backend avance. Lo único pendiente del catálogo es `/api/reportes` (RF-25, RF-26, CU-15, CU-16): el backend todavía no lo implementa (ver sección 10 de `docs/contrato-api.md`; confirmado el 2026-10-23 en `devopsedu-backend`, rama `cuarta-semana`, sin archivo de rutas de reportes en `src/api/rutas/`), así que **Reportes** y **Exportación** quedan bloqueadas hasta que el backend avance a su Etapa 7. Próximo paso cuando eso ocurra: repetir el mismo procedimiento (leer el contrato actualizado, confirmar decisiones pendientes con el usuario, TDD por vista) para esas dos vistas. Al diseñarlas, decidir con el usuario cómo se trata el modo lectura para el rol investigador que menciona RF-25: hoy `src/tipos/roles.ts` solo contempla `estudiante` y `docente`.
 
 Otros pendientes, también bloqueados por el backend: edición de perfil (RF-04, ver `DT-03`), endpoint de listado de usuarios para reemplazar el campo manual de `idUsuario` (ver `DT-09`) y la comparación exacta de `imagenDocker` en la evaluación de actividades (ver `DT-14`).
 
-Mejoras opcionales detectadas en la revisión del 2026-10-10, sin urgencia: el bundle de producción pesa ~1.48 MB (Vite advierte por superar 500 kB; candidatos a `React.lazy`: el editor TipTap y las gráficas de Recharts), y React Router emite advertencias de las banderas `v7_startTransition` y `v7_relativeSplatPath` en las pruebas.
+**Integración en `main`:** todo el trabajo vive en la rama `cuarta-semana` (subida a `origin`); `main` solo contiene los tres primeros commits. Por decisión del usuario (2026-10-23), el PR de `cuarta-semana` a `main` se pospone hasta retomar el desarrollo con el backend listo.
+
+Mejoras opcionales detectadas en las revisiones del 2026-10-10 y 2026-10-23, sin urgencia: el bundle de producción pesa ~1.5 MB (Vite advierte por superar 500 kB; candidatos a `React.lazy`: el editor TipTap y las gráficas de Recharts), React Router emite advertencias de las banderas `v7_startTransition` y `v7_relativeSplatPath` en las pruebas, y el `README.md` podría ampliarse con la puesta en marcha contra el backend y un mapa de vistas (RNF-16), como ya tiene el backend.
 
 **Hallazgos de la verificación manual (usuario, 2026-09-12) y su resolución:**
 
@@ -188,6 +191,20 @@ No es una etapa del plan original. Surgió al probar la calificación automátic
 - [x] **Formulario de actividad** con las cinco condiciones de aprobación opcionales (`formulario-actividad.tsx`) — ver `DT-14`.
 - [x] Verificación manual con `npm run dev` contra el backend real — confirmada por el usuario (2026-10-10).
 - [x] Corrección posterior (2026-10-10): la prueba "elimina el servicio tras confirmar en el dialogo" de `detalle-servicio.page.test.tsx` simulaba `DELETE /api/servicios/:idServicio` con la forma anterior a DT-15 del backend (sin `recreado`, `volumenesEliminados` ni `volumenesOmitidos`). La página fallaba con un `TypeError` que Vitest reportaba como "Unhandled error" mientras la prueba seguía en verde. Se actualizó el mock a la forma vigente del contrato. Suite tras la corrección: 262 pruebas en 53 archivos, sin errores no capturados; cobertura 98.4% líneas/statements, 91% ramas, 93% funciones.
+
+---
+
+## Mejora transversal — Estado visual de actividades, barra lateral por categorías y panel principal con datos (RF-10, RF-16, RF-17, RF-22, RF-23, RNF-03, RNF-05, CU-08, CU-12, CU-13) — COMPLETA (`5317f9f`, `29a626e`, `1373b2d`, `b39a284`, `2d57459`)
+
+No es una etapa del plan original. Surgió a partir de mockups aportados por el usuario para tres piezas: el estudiante no distinguía qué actividades prácticas le faltaban, la barra lateral de `DT-05` era una lista plana de enlaces y el panel principal solo ofrecía tres accesos genéricos. Coincidió con DT-18 del backend, que agrega `completada` y `fechaCompletada` a cada bloque `actividad` del contrato 6.1b. Decisiones registradas en `DT-17` (`docs/decisiones-tecnicas.md`), que supera en parte a `DT-05`.
+
+- [x] **Contrato y decisiones** (`5317f9f`): sección 6.1b de `docs/contrato-api.md` sincronizada con el estado de las actividades y `DT-17` registrada.
+- [x] **Sistema de diseño** (`29a626e`): tokens de color suaves para éxito, advertencia, primario y recursos (`src/diseno/tokens.ts`, `tailwind.config.ts`); componentes comunes nuevos `barra-progreso.tsx`, `enlace-boton.tsx` (enlace con aspecto de botón, evita anidar `<button>` en `<a>`) y `tarjeta.tsx`; utilidad `src/utilidades/formatear-capacidad.ts`.
+- [x] **Barra lateral por categorías** (`1373b2d`): `barra-navegacion.tsx` agrupa los enlaces en General, Aprendizaje, Administración, Entorno, Monitoreo y Cuenta, con iconos, y oculta las categorías sin enlaces para el rol. Recibe un `encabezadoLateral` opcional que `diseno-autenticado.tsx` usa para mostrar `ResumenRutaLateral` (`src/modulos/aprendizaje/componentes/resumen-ruta-lateral.tsx`, con `utilidades/progreso-ruta.ts`) solo al estudiante, sin acoplar `componentes-comunes` al módulo de aprendizaje.
+- [x] **Estado de las actividades** (`b39a284`): `tarjeta-actividad.tsx` (nuevo) pinta la actividad en amarillo (pendiente) o verde (completada, con fecha) y escribe el estado como texto (RNF-05). Varias actividades en un módulo se numeran para tener nombres accesibles distintos. Handlers de MSW y `tests/fixtures/aprendizaje.factory.ts` actualizados con los campos nuevos.
+- [x] **Panel principal con datos** (`2d57459`): `panel-principal.page.tsx` compone `TarjetaMisServicios` (conteo por estado y hasta cinco servicios), `TarjetaRutaAprendizaje` (solo estudiante: progreso y "Continúa donde quedaste") y `TarjetaCapacidad` (comprometido frente al total), cada una con sus estados de carga, error y vacío.
+- [x] Verificación (2026-10-23): `npm test` (297 pruebas en 62 archivos, sin errores no capturados), `npm run test:coverage` (98.6% líneas/statements, 92.3% ramas, 93.6% funciones), `npm run build`, `npx tsc --noEmit` y `npm run lint` — todo en verde.
+- [x] Verificación manual con `npm run dev` contra el backend real — confirmada por el usuario (2026-10-23).
 
 ---
 
