@@ -10,6 +10,7 @@ import { useId, type ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import {
   BookOpen,
+  ClipboardList,
   Gauge,
   History,
   LayoutGrid,
@@ -69,6 +70,13 @@ const CATEGORIAS: Categoria[] = [
         hacia: "/administracion/estudiantes",
         etiqueta: "Gestión de estudiantes",
         icono: Users,
+        fin: false,
+        rolesPermitidos: [ID_ROL_DOCENTE],
+      },
+      {
+        hacia: "/administracion/reportes",
+        etiqueta: "Reportes",
+        icono: ClipboardList,
         fin: false,
         rolesPermitidos: [ID_ROL_DOCENTE],
       },

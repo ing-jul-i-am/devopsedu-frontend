@@ -85,9 +85,10 @@ describe("BarraNavegacion", () => {
     expect(screen.queryByRole("list", { name: /administración/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /módulos de aprendizaje/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /gestión de estudiantes/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^reportes$/i })).not.toBeInTheDocument();
   });
 
-  it("muestra la categoria de Administracion solo al docente (RF-20, RF-21)", () => {
+  it("muestra la categoria de Administracion solo al docente (RF-20, RF-21, RF-25)", () => {
     guardarSesion("token-de-prueba", crearUsuarioDePrueba({ idRol: ID_ROL_DOCENTE }));
 
     renderizarBarra();
@@ -99,6 +100,10 @@ describe("BarraNavegacion", () => {
     expect(
       within(administracion).getByRole("link", { name: /gestión de estudiantes/i })
     ).toHaveAttribute("href", "/administracion/estudiantes");
+    expect(within(administracion).getByRole("link", { name: /^reportes$/i })).toHaveAttribute(
+      "href",
+      "/administracion/reportes"
+    );
   });
 
   it("oculta la categoria Aprendizaje al docente porque no tiene enlaces para el", () => {

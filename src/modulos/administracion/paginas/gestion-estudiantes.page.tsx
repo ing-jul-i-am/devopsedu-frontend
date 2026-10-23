@@ -5,7 +5,6 @@
 // DT-09). Sigue la linea visual del panel principal (DT-17).
 // Cubre: RF-21, RF-25, RNF-03, RNF-04, RNF-05 — CU-11
 import { useState } from "react";
-import { Users } from "lucide-react";
 import { CampoSelector } from "@/componentes-comunes/campo-selector";
 import { CampoTexto } from "@/componentes-comunes/campo-texto";
 import { CasillaVerificacion } from "@/componentes-comunes/casilla-verificacion";
@@ -20,6 +19,7 @@ import { useEstudiantes } from "../hooks/use-estudiantes";
 import { useAsignarRuta } from "../hooks/use-asignar-ruta";
 import { useRestablecerContrasena } from "../hooks/use-restablecer-contrasena";
 import { ProgresoRutaEstudiante } from "../componentes/progreso-ruta-estudiante";
+import { SinEstudiantes } from "../componentes/sin-estudiantes";
 
 function MensajeExito({ children }: { children: string }) {
   return (
@@ -37,21 +37,6 @@ function MensajeError({ children }: { children: string }) {
     <p role="alert" className="text-sm text-peligro">
       {children}
     </p>
-  );
-}
-
-function SinEstudiantes() {
-  return (
-    <div className="flex flex-col items-center gap-sm px-lg py-xl text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-primario-suave text-primario">
-        <Users aria-hidden="true" className="h-6 w-6" />
-      </span>
-      <h3 className="font-semibold text-texto">No hay estudiantes registrados</h3>
-      <p className="max-w-sm text-sm text-texto-secundario">
-        Cuando tus estudiantes creen su cuenta desde la vista de registro, aparecerán aquí para
-        asignarles una ruta.
-      </p>
-    </div>
   );
 }
 

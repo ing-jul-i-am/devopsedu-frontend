@@ -171,4 +171,22 @@ describe("Rutas", () => {
 
     expect(screen.getByRole("heading", { name: /bienvenido/i })).toBeInTheDocument();
   });
+
+  it("muestra los reportes de progreso al docente (RF-25, CU-15)", () => {
+    guardarSesion("token-de-prueba", crearUsuarioDePrueba({ idRol: ID_ROL_DOCENTE }));
+
+    renderizarConProveedores(<Rutas />, { rutaInicial: "/administracion/reportes" });
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: /reportes de progreso/i })
+    ).toBeInTheDocument();
+  });
+
+  it("redirige al estudiante al panel principal si visita los reportes", () => {
+    guardarSesion("token-de-prueba", crearUsuarioDePrueba({ idRol: ID_ROL_ESTUDIANTE }));
+
+    renderizarConProveedores(<Rutas />, { rutaInicial: "/administracion/reportes" });
+
+    expect(screen.getByRole("heading", { name: /bienvenido/i })).toBeInTheDocument();
+  });
 });

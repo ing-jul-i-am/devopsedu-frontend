@@ -1,7 +1,8 @@
 // Insignia visual del progreso de un modulo dentro de la ruta del estudiante
 // (RF-22, CU-13): verde = completado, amarillo = en progreso, gris = sin
 // iniciar. Unica fuente de verdad para esta etiqueta y color en "Mi ruta" y
-// en la vista de contenido de modulo.
+// en la vista de contenido de modulo. Usa los tonos suaves de DT-17, cuyo
+// texto cumple el contraste AA (DT-18).
 import type { EstadoModuloRuta } from "@/tipos/aprendizaje";
 
 const ETIQUETAS: Record<EstadoModuloRuta, string> = {
@@ -11,9 +12,9 @@ const ETIQUETAS: Record<EstadoModuloRuta, string> = {
 };
 
 const CLASES: Record<EstadoModuloRuta, string> = {
-  completado: "bg-exito/10 text-exito",
-  en_progreso: "bg-advertencia/10 text-advertencia",
-  sin_iniciar: "bg-estado-eliminado/10 text-estado-eliminado",
+  completado: "border-exito-borde bg-exito-suave text-exito-texto",
+  en_progreso: "border-advertencia-borde bg-advertencia-suave text-advertencia-texto",
+  sin_iniciar: "border-borde bg-fondo text-texto-secundario",
 };
 
 interface Props {
@@ -23,7 +24,7 @@ interface Props {
 export function InsigniaEstadoModulo({ estado }: Props) {
   return (
     <span
-      className={`inline-flex w-fit items-center rounded-completo px-sm py-xs text-xs font-medium ${CLASES[estado]}`}
+      className={`inline-flex w-fit items-center rounded-completo border px-sm py-xs text-xs font-medium ${CLASES[estado]}`}
     >
       {ETIQUETAS[estado]}
     </span>

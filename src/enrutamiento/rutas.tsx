@@ -18,6 +18,7 @@ import { PanelModulosPage } from "@/modulos/administracion/paginas/panel-modulos
 import { CrearModuloPage } from "@/modulos/administracion/paginas/crear-modulo.page";
 import { EditarModuloPage } from "@/modulos/administracion/paginas/editar-modulo.page";
 import { GestionEstudiantesPage } from "@/modulos/administracion/paginas/gestion-estudiantes.page";
+import { ReportesPage } from "@/modulos/administracion/paginas/reportes.page";
 import { DisenoAutenticado } from "./diseno-autenticado";
 import { ID_ROL_DOCENTE, ID_ROL_ESTUDIANTE } from "@/tipos/roles";
 
@@ -84,6 +85,7 @@ export function Rutas() {
             <Route path="/administracion/modulos/nuevo" element={<CrearModuloPage />} />
             <Route path="/administracion/modulos/:idModulo" element={<EditarModuloPage />} />
             <Route path="/administracion/estudiantes" element={<GestionEstudiantesPage />} />
+            <Route path="/administracion/reportes" element={<ReportesPage />} />
           </Route>
         </Route>
       </Route>
