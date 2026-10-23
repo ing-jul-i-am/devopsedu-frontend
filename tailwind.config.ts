@@ -14,13 +14,30 @@ export default {
           DEFAULT: colores.primario,
           hover: colores.primarioHover,
           contraste: colores.primarioContraste,
+          suave: colores.primarioSuave,
         },
-        advertencia: colores.advertencia,
+        advertencia: {
+          DEFAULT: colores.advertencia,
+          suave: colores.advertenciaSuave,
+          borde: colores.advertenciaBorde,
+          texto: colores.advertenciaTexto,
+          hover: colores.advertenciaHover,
+        },
         peligro: {
           DEFAULT: colores.peligro,
           hover: colores.peligroHover,
         },
-        exito: colores.exito,
+        exito: {
+          DEFAULT: colores.exito,
+          suave: colores.exitoSuave,
+          borde: colores.exitoBorde,
+          texto: colores.exitoTexto,
+        },
+        recurso: {
+          cpu: colores.recursoCpu,
+          memoria: colores.recursoMemoria,
+          almacenamiento: colores.recursoAlmacenamiento,
+        },
         borde: colores.borde,
         enfoque: colores.enfoque,
         estado: {

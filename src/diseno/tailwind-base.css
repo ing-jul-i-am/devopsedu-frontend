@@ -11,3 +11,34 @@
     @apply outline-2 outline-offset-2 outline-enfoque;
   }
 }
+
+/* Barra de progreso redondeada sobre <progress> (BarraProgreso). El color del
+   relleno lo define cada tono mediante la variable --color-relleno. */
+@layer components {
+  .barra-progreso {
+    --color-relleno: theme("colors.recurso.cpu");
+    @apply h-2 w-full appearance-none overflow-hidden rounded-completo border-0 bg-borde/40;
+  }
+
+  .barra-progreso::-webkit-progress-bar {
+    @apply rounded-completo bg-borde/40;
+  }
+
+  .barra-progreso::-webkit-progress-value {
+    @apply rounded-completo;
+    background-color: var(--color-relleno);
+  }
+
+  .barra-progreso::-moz-progress-bar {
+    @apply rounded-completo;
+    background-color: var(--color-relleno);
+  }
+
+  .barra-progreso-memoria {
+    --color-relleno: theme("colors.recurso.memoria");
+  }
+
+  .barra-progreso-almacenamiento {
+    --color-relleno: theme("colors.recurso.almacenamiento");
+  }
+}
