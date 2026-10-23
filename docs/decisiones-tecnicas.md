@@ -151,3 +151,27 @@ El diseño inicial de esta vista pensaba construir el diálogo de confirmación 
 **Consecuencias:** tras guardar, `editar-configuracion.page.tsx` navega al detalle con `state: { configuracionActualizada: true }` y el detalle muestra un aviso puntual con el siguiente paso, adaptado según el servicio esté o no en ejecución. Se prefirió ese aviso a una nota permanente porque el frontend no puede saber si la configuración vigente difiere de la del contenedor en marcha: ningún campo del contrato lo indica.
 
 **Alternativas consideradas:** mantener el campo bloqueado y exigir crear un servicio nuevo para cambiar de imagen — descartada porque DT-15 del backend eliminó el motivo, y porque obligaría al estudiante a perder el histórico de operaciones del servicio solo para corregir una etiqueta.
+
+## DT-17: Estado visual de las actividades, barra lateral por categorías y panel principal con datos (supera en parte a DT-05)
+
+**Fecha:** 2026-10-10
+**Contexto:** el estudiante no tenía un indicador de qué actividades prácticas le faltaban: el bloque `actividad` se veía igual estuviera cumplida o no, porque el contrato 6.1b no exponía su estado. La barra lateral de DT-05 era una lista plana de enlaces de texto, y el panel principal solo ofrecía tres accesos genéricos, sin información del entorno ni del avance. El usuario aportó mockups para las tres piezas.
+
+**Decisión:**
+- **Actividades:** con DT-18 del backend, cada bloque `actividad` de 6.1b trae `completada` y `fechaCompletada`. `TarjetaActividad` se pinta en amarillo (pendiente) o verde (completada, con su fecha), y el estado también se escribe como texto, porque el color solo no basta según RNF-05. Se adoptó una versión simplificada del mockup: sin título propio, sin conteo de requisitos y sin "Ver mi servicio". La actividad no tiene título en el modelo, el contrato no expone los criterios al estudiante a propósito, y un `Resultado` no está vinculado al servicio que lo cumplió. Si el módulo tiene varias actividades, se numeran para que cada tarjeta tenga un nombre accesible distinto.
+- **Barra lateral:** se agrupa por categorías con iconos: General, Aprendizaje, Administración, Entorno, Monitoreo y Cuenta. Se oculta cualquier categoría sin enlaces para el rol del usuario. `BarraNavegacion` recibe un `encabezadoLateral` opcional, y `DisenoAutenticado` lo usa para mostrar `ResumenRutaLateral` solo al estudiante. Así `componentes-comunes` no depende del módulo de aprendizaje, y el docente no consulta `mi-ruta`, donde recibiría un 403.
+- **Panel principal:** tres tarjetas, cada una con sus propios estados de carga, error y vacío.
+  - `TarjetaMisServicios`: conteo por estado y hasta cinco servicios.
+  - `TarjetaRutaAprendizaje`: solo para el estudiante. Muestra el progreso y el primer módulo no completado ("Continúa donde quedaste").
+  - `TarjetaCapacidad`: lo comprometido frente al total de cada recurso.
+- **Piezas comunes nuevas:** `BarraProgreso`, `EnlaceBoton` (enlace con aspecto de botón, que evita anidar `<button>` en `<a>`) y `Tarjeta`, además de tokens de color suaves para éxito, advertencia, primario y recursos.
+
+**Consecuencias:**
+- La ruta no tiene nombre en el backend, así que la barra y el panel muestran "Mi ruta" y su progreso en lugar del nombre que aparece en el mockup.
+- "Ayuda y documentación" se omite hasta que exista contenido.
+- Los textos de la barra lateral y del panel llevan tildes, como en el mockup. Las pruebas que buscaban "Historico" sin tilde se actualizaron.
+- La insignia de estado del servicio sigue siendo `InsigniaEstado` ("En ejecucion"), la única fuente de verdad de esas etiquetas.
+
+**Alternativas consideradas:**
+- Derivar el color de la actividad del `estado` del módulo (contrato 6.1). Descartada porque es impreciso: una actividad cumplida se vería pendiente mientras faltara aprobar la evaluación del módulo.
+- Importar `useMiRuta` directamente desde `BarraNavegacion`. Descartada para no acoplar un componente común a un módulo de dominio.
