@@ -1,130 +1,119 @@
 // Cubre: RNF-03, RNF-05 — patron unico de navegacion (barra superior +
-// menu lateral con bloque activo resaltado) en todas las vistas autenticadas
-// (seccion 4.2.16-4.2.18 del documento de diseño).
+// menu lateral con iconos, agrupado por categorias y con la seccion activa
+// resaltada) en todas las vistas autenticadas (seccion 4.2.16-4.2.18 del
+// documento de diseño, DT-17).
 import { describe, it, expect, afterEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { renderizarConProveedores } from "../../ayudas/renderizar-con-proveedores";
 import { crearUsuarioDePrueba } from "../../fixtures/usuario.factory";
 import { BarraNavegacion } from "@/componentes-comunes/barra-navegacion";
 import { guardarSesion, limpiarSesion } from "@/infraestructura/almacenamiento-sesion";
 import { ID_ROL_DOCENTE, ID_ROL_ESTUDIANTE } from "@/tipos/roles";
 
+function renderizarBarra(opciones: { rutaInicial?: string } = {}) {
+  return renderizarConProveedores(
+    <BarraNavegacion>
+      <p>Contenido de la pagina</p>
+    </BarraNavegacion>,
+    opciones
+  );
+}
+
 describe("BarraNavegacion", () => {
   afterEach(() => {
     limpiarSesion();
   });
 
-  it("muestra la marca y el nombre del usuario autenticado", () => {
+  it("muestra la marca, el nombre del usuario con su inicial y el contenido", () => {
     guardarSesion("token-de-prueba", crearUsuarioDePrueba({ nombre: "Julian Barrera" }));
 
-    renderizarConProveedores(
-      <BarraNavegacion>
-        <p>Contenido de la pagina</p>
-      </BarraNavegacion>
-    );
+    renderizarBarra();
 
     expect(screen.getByText("DevOpsEdu")).toBeInTheDocument();
     expect(screen.getByText("Julian Barrera")).toBeInTheDocument();
+    expect(screen.getByText("J")).toBeInTheDocument();
     expect(screen.getByText("Contenido de la pagina")).toBeInTheDocument();
   });
 
-  it("muestra enlaces a las areas disponibles de la plataforma", () => {
-    guardarSesion("token-de-prueba", crearUsuarioDePrueba());
-
-    renderizarConProveedores(
-      <BarraNavegacion>
-        <p>Contenido de la pagina</p>
-      </BarraNavegacion>
-    );
-
-    expect(screen.getByRole("link", { name: /panel principal/i })).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: /mis servicios/i })).toHaveAttribute(
-      "href",
-      "/servicios"
-    );
-    expect(screen.getByRole("link", { name: /capacidad del servidor/i })).toHaveAttribute(
-      "href",
-      "/capacidad-servidor"
-    );
-    expect(screen.getByRole("link", { name: /perfil/i })).toHaveAttribute("href", "/perfil");
-    expect(screen.getByRole("link", { name: /^historico$/i })).toHaveAttribute(
-      "href",
-      "/monitoreo/historico"
-    );
-    expect(screen.getByRole("link", { name: /graficas de metricas/i })).toHaveAttribute(
-      "href",
-      "/monitoreo/metricas"
-    );
-  });
-
-  it("muestra el enlace a Mi ruta solo para el rol estudiante (RF-22)", () => {
+  it("agrupa los enlaces del estudiante por categorias", () => {
     guardarSesion("token-de-prueba", crearUsuarioDePrueba({ idRol: ID_ROL_ESTUDIANTE }));
 
-    renderizarConProveedores(
-      <BarraNavegacion>
-        <p>Contenido de la pagina</p>
-      </BarraNavegacion>
+    renderizarBarra();
+
+    const general = screen.getByRole("list", { name: /general/i });
+    expect(within(general).getByRole("link", { name: /panel principal/i })).toHaveAttribute(
+      "href",
+      "/"
     );
 
-    expect(screen.getByRole("link", { name: /mi ruta/i })).toHaveAttribute(
+    const aprendizaje = screen.getByRole("list", { name: /aprendizaje/i });
+    expect(within(aprendizaje).getByRole("link", { name: /mi ruta/i })).toHaveAttribute(
       "href",
       "/aprendizaje/mi-ruta"
     );
+
+    const entorno = screen.getByRole("list", { name: /entorno/i });
+    expect(within(entorno).getByRole("link", { name: /mis servicios/i })).toHaveAttribute(
+      "href",
+      "/servicios"
+    );
+    expect(
+      within(entorno).getByRole("link", { name: /capacidad del servidor/i })
+    ).toHaveAttribute("href", "/capacidad-servidor");
+
+    const monitoreo = screen.getByRole("list", { name: /monitoreo/i });
+    expect(within(monitoreo).getByRole("link", { name: /^histórico$/i })).toHaveAttribute(
+      "href",
+      "/monitoreo/historico"
+    );
+    expect(
+      within(monitoreo).getByRole("link", { name: /gráficas de métricas/i })
+    ).toHaveAttribute("href", "/monitoreo/metricas");
+
+    const cuenta = screen.getByRole("list", { name: /cuenta/i });
+    expect(within(cuenta).getByRole("link", { name: /perfil/i })).toHaveAttribute(
+      "href",
+      "/perfil"
+    );
   });
 
-  it("muestra los enlaces de Administracion solo para el rol docente (RF-20, RF-21)", () => {
-    guardarSesion("token-de-prueba", crearUsuarioDePrueba({ idRol: ID_ROL_DOCENTE }));
-
-    renderizarConProveedores(
-      <BarraNavegacion>
-        <p>Contenido de la pagina</p>
-      </BarraNavegacion>
-    );
-
-    expect(screen.getByRole("link", { name: /modulos de aprendizaje/i })).toHaveAttribute(
-      "href",
-      "/administracion/modulos"
-    );
-    expect(screen.getByRole("link", { name: /gestion de estudiantes/i })).toHaveAttribute(
-      "href",
-      "/administracion/estudiantes"
-    );
-  });
-
-  it("no muestra los enlaces de Administracion para el rol estudiante", () => {
+  it("no muestra la categoria de Administracion al estudiante", () => {
     guardarSesion("token-de-prueba", crearUsuarioDePrueba({ idRol: ID_ROL_ESTUDIANTE }));
 
-    renderizarConProveedores(
-      <BarraNavegacion>
-        <p>Contenido de la pagina</p>
-      </BarraNavegacion>
-    );
+    renderizarBarra();
 
-    expect(screen.queryByRole("link", { name: /modulos de aprendizaje/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /gestion de estudiantes/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: /administración/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /módulos de aprendizaje/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /gestión de estudiantes/i })).not.toBeInTheDocument();
   });
 
-  it("no muestra el enlace a Mi ruta para el rol docente", () => {
+  it("muestra la categoria de Administracion solo al docente (RF-20, RF-21)", () => {
     guardarSesion("token-de-prueba", crearUsuarioDePrueba({ idRol: ID_ROL_DOCENTE }));
 
-    renderizarConProveedores(
-      <BarraNavegacion>
-        <p>Contenido de la pagina</p>
-      </BarraNavegacion>
-    );
+    renderizarBarra();
 
+    const administracion = screen.getByRole("list", { name: /administración/i });
+    expect(
+      within(administracion).getByRole("link", { name: /módulos de aprendizaje/i })
+    ).toHaveAttribute("href", "/administracion/modulos");
+    expect(
+      within(administracion).getByRole("link", { name: /gestión de estudiantes/i })
+    ).toHaveAttribute("href", "/administracion/estudiantes");
+  });
+
+  it("oculta la categoria Aprendizaje al docente porque no tiene enlaces para el", () => {
+    guardarSesion("token-de-prueba", crearUsuarioDePrueba({ idRol: ID_ROL_DOCENTE }));
+
+    renderizarBarra();
+
+    expect(screen.queryByRole("list", { name: /^aprendizaje$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /mi ruta/i })).not.toBeInTheDocument();
   });
 
   it("resalta el enlace de la seccion activa", () => {
     guardarSesion("token-de-prueba", crearUsuarioDePrueba());
 
-    renderizarConProveedores(
-      <BarraNavegacion>
-        <p>Contenido de la pagina</p>
-      </BarraNavegacion>,
-      { rutaInicial: "/servicios" }
-    );
+    renderizarBarra({ rutaInicial: "/servicios" });
 
     expect(screen.getByRole("link", { name: /mis servicios/i })).toHaveAttribute(
       "aria-current",
@@ -133,5 +122,18 @@ describe("BarraNavegacion", () => {
     expect(screen.getByRole("link", { name: /panel principal/i })).not.toHaveAttribute(
       "aria-current"
     );
+  });
+
+  it("muestra el encabezado lateral recibido sobre las categorias", () => {
+    guardarSesion("token-de-prueba", crearUsuarioDePrueba());
+
+    renderizarConProveedores(
+      <BarraNavegacion encabezadoLateral={<p>Resumen de la ruta</p>}>
+        <p>Contenido de la pagina</p>
+      </BarraNavegacion>
+    );
+
+    const navegacion = screen.getByRole("navigation", { name: /navegación principal/i });
+    expect(within(navegacion).getByText("Resumen de la ruta")).toBeInTheDocument();
   });
 });

@@ -52,7 +52,7 @@ describe("Consultar historico desde la navegacion", () => {
     const usuario = userEvent.setup();
     renderizarConProveedores(<App />, { rutaInicial: "/" });
 
-    await usuario.click(screen.getByRole("link", { name: /^historico$/i }));
+    await usuario.click(screen.getByRole("link", { name: /^histórico$/i }));
     await usuario.selectOptions(
       await screen.findByLabelText(/selecciona un servicio/i),
       "3"
