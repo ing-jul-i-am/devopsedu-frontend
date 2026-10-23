@@ -13,6 +13,21 @@ import { useIniciarModulo } from "../hooks/use-iniciar-modulo";
 import { useEvaluacionModulo } from "../hooks/use-evaluacion-modulo";
 import { useMiRuta } from "../hooks/use-mi-ruta";
 import { BloqueContenido } from "../componentes/bloque-contenido";
+import type { BloqueContenidoEstudiante } from "@/tipos/aprendizaje";
+
+// Con mas de una actividad en el modulo, cada una recibe su numero de orden
+// para que sus tarjetas tengan nombres accesibles distintos (RNF-05).
+function numerarActividades(contenido: BloqueContenidoEstudiante[]): (number | undefined)[] {
+  const total = contenido.filter((bloque) => bloque.tipo === "actividad").length;
+  let vistas = 0;
+  return contenido.map((bloque) => {
+    if (bloque.tipo !== "actividad" || total < 2) {
+      return undefined;
+    }
+    vistas += 1;
+    return vistas;
+  });
+}
 
 export function ModuloAprendizajePage() {
   const { idModulo } = useParams<{ idModulo: string }>();
@@ -61,13 +76,19 @@ export function ModuloAprendizajePage() {
     );
   }
 
+  const numerosActividad = numerarActividades(modulo.contenido);
+
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-md p-lg">
       <h1 className="text-2xl font-semibold text-texto">{modulo.nombre}</h1>
 
       <div className="flex flex-col gap-md">
         {modulo.contenido.map((bloque, indice) => (
-          <BloqueContenido key={indice} bloque={bloque} />
+          <BloqueContenido
+            key={indice}
+            bloque={bloque}
+            numeroActividad={numerosActividad[indice]}
+          />
         ))}
       </div>
 

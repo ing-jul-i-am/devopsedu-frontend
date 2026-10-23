@@ -1,10 +1,13 @@
 // Cubre: RF-23, RNF-05 — CU-12
 import { describe, it, expect } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { servidorMock } from "../../../../mocks/servidor";
 import { renderizarConProveedores } from "../../../../ayudas/renderizar-con-proveedores";
-import { crearModuloConContenidoDePrueba } from "../../../../fixtures/aprendizaje.factory";
+import {
+  crearBloqueActividadEstudianteDePrueba,
+  crearModuloConContenidoDePrueba,
+} from "../../../../fixtures/aprendizaje.factory";
 import { ModuloAprendizajePage } from "@/modulos/aprendizaje/paginas/modulo-aprendizaje.page";
 import { configuracion } from "@/infraestructura/configuracion";
 
@@ -74,11 +77,9 @@ describe("ModuloAprendizajePage", () => {
                 titulo: "Documentacion oficial de Docker",
                 descripcion: "Referencia completa",
               },
-              {
-                tipo: "actividad",
-                idActividad: 7,
+              crearBloqueActividadEstudianteDePrueba({
                 descripcion: "Despliega un servicio con nginx y al menos un volumen",
-              },
+              }),
             ],
           })
         )
@@ -97,6 +98,40 @@ describe("ModuloAprendizajePage", () => {
       "https://docs.docker.com/"
     );
     expect(screen.getByText(/despliega un servicio con nginx/i)).toBeInTheDocument();
+  });
+
+  it("distingue las actividades pendientes de las completadas y las numera (RF-23)", async () => {
+    servidorMock.use(
+      http.post(rutaIniciar(3), () => HttpResponse.json({ mensaje: "Modulo iniciado" })),
+      http.get(rutaModulo(3), () =>
+        HttpResponse.json(
+          crearModuloConContenidoDePrueba({
+            contenido: [
+              crearBloqueActividadEstudianteDePrueba({
+                idActividad: 7,
+                completada: true,
+                fechaCompletada: "2026-10-10T12:00:00.000Z",
+              }),
+              { tipo: "texto", contenido: "Ahora conecta dos contenedores en la misma red." },
+              crearBloqueActividadEstudianteDePrueba({
+                idActividad: 8,
+                descripcion: "Crea una red y despliega dos servicios conectados a ella",
+              }),
+            ],
+          })
+        )
+      )
+    );
+
+    renderizarConProveedores(<ModuloAprendizajePage />, {
+      rutaInicial: "/aprendizaje/modulos/3",
+      rutaPatron: "/aprendizaje/modulos/:idModulo",
+    });
+
+    const primera = await screen.findByRole("article", { name: "Actividad práctica 1" });
+    const segunda = screen.getByRole("article", { name: "Actividad práctica 2" });
+    expect(within(primera).getByText(/^completada$/i)).toBeInTheDocument();
+    expect(within(segunda).getByText(/pendiente/i)).toBeInTheDocument();
   });
 
   it("muestra un mensaje claro cuando el modulo no pertenece a la ruta del estudiante", async () => {

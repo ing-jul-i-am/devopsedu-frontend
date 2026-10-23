@@ -79,12 +79,26 @@ export interface MiRuta {
   modulos: ModuloMiRuta[];
 }
 
+// Bloque "actividad" tal como lo recibe el estudiante (contrato 6.1b, DT-18 del
+// backend): enriquecido con la descripcion y el estado de completado propio.
+export interface BloqueActividadEstudiante {
+  tipo: "actividad";
+  idActividad: number;
+  descripcion: string;
+  completada: boolean;
+  fechaCompletada: string | null;
+}
+
+export type BloqueContenidoEstudiante =
+  | Exclude<BloqueContenido, { tipo: "actividad" }>
+  | BloqueActividadEstudiante;
+
 export interface ModuloConContenido {
   idModulo: number;
   nombre: string;
   orden: number;
   fechaInicio: string | null;
-  contenido: BloqueContenido[];
+  contenido: BloqueContenidoEstudiante[];
 }
 
 export interface PreguntaEvaluacionEstudiante {

@@ -1,5 +1,6 @@
 import type {
   Actividad,
+  BloqueActividadEstudiante,
   Evaluacion,
   EvaluacionEstudiante,
   MiRuta,
@@ -41,6 +42,19 @@ export function crearModuloConContenidoDePrueba(
     orden: 1,
     fechaInicio: null,
     contenido: [{ tipo: "texto", contenido: "Los contenedores empaquetan una aplicacion." }],
+    ...sobreescrituras,
+  };
+}
+
+export function crearBloqueActividadEstudianteDePrueba(
+  sobreescrituras: Partial<BloqueActividadEstudiante> = {}
+): BloqueActividadEstudiante {
+  return {
+    tipo: "actividad",
+    idActividad: 7,
+    descripcion: "Despliega un servicio con nginx y al menos un volumen",
+    completada: false,
+    fechaCompletada: null,
     ...sobreescrituras,
   };
 }

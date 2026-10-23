@@ -278,7 +278,16 @@ export const handlers: HttpHandler[] = [
       nombre: MODULO_DE_PRUEBA.nombre,
       orden: MODULO_DE_PRUEBA.orden,
       fechaInicio: null,
-      contenido: MODULO_DE_PRUEBA.contenido,
+      contenido: [
+        ...MODULO_DE_PRUEBA.contenido,
+        {
+          tipo: "actividad",
+          idActividad: 7,
+          descripcion: "Despliega un servicio con nginx y al menos un volumen",
+          completada: false,
+          fechaCompletada: null,
+        },
+      ],
     })
   ),
 

@@ -1,14 +1,16 @@
 // Renderiza un bloque de contenido de un modulo (texto, imagen, enlace o
 // actividad) segun su forma discriminada por "tipo" (docs/contrato-api.md
-// seccion 4.1). Reutilizado por la vista de contenido de modulo (RF-23).
+// secciones 4.1 y 6.1b). Reutilizado por la vista de contenido de modulo (RF-23).
 import Markdown from "react-markdown";
-import type { BloqueContenido as TipoBloqueContenido } from "@/tipos/aprendizaje";
+import type { BloqueContenidoEstudiante } from "@/tipos/aprendizaje";
+import { TarjetaActividad } from "./tarjeta-actividad";
 
 interface Props {
-  bloque: TipoBloqueContenido;
+  bloque: BloqueContenidoEstudiante;
+  numeroActividad?: number | undefined;
 }
 
-export function BloqueContenido({ bloque }: Props) {
+export function BloqueContenido({ bloque, numeroActividad }: Props) {
   switch (bloque.tipo) {
     case "texto":
       return (
@@ -39,13 +41,6 @@ export function BloqueContenido({ bloque }: Props) {
         </a>
       );
     case "actividad":
-      return (
-        <div className="rounded-md border border-borde bg-fondo p-sm">
-          <p className="text-sm font-medium text-texto">Actividad practica</p>
-          {bloque.descripcion ? (
-            <p className="text-sm text-texto-secundario">{bloque.descripcion}</p>
-          ) : null}
-        </div>
-      );
+      return <TarjetaActividad actividad={bloque} numero={numeroActividad} />;
   }
 }
