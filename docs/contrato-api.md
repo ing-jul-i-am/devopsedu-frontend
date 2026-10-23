@@ -59,13 +59,20 @@ base de datos y resincroniza automaticamente (ver 3.6):
   y `fechaCompletada` a cada bloque `actividad` del contenido, para que el frontend
   distinga las actividades pendientes de las completadas. Ver 6.1b. La vista del
   docente (4.2b) y `mi-ruta` (6.1) no cambian.
+- RF-02, DT-19: cada token JWT lleva un `jti` unico. Dos inicios de sesion del mismo
+  usuario en el mismo segundo ya no responden `500`. La forma de la respuesta no cambia.
+- Etapa 7 (RF-25, CU-15, DT-20): se agrega el grupo `/api/reportes`, exclusivo del
+  rol docente, con `GET /api/reportes/progreso`. Ver seccion 8b.
+- Etapa 7 (RF-25, CU-15, DT-21): se agrega `GET /api/usuarios/estudiantes` (docente) con
+  el listado de estudiantes y un resumen de su ruta (7.2). El reporte de 8b.1 agrega
+  `fechaRegistro` a cada estudiante.
+- Etapa 7 (RF-25, CU-16, DT-22): se agrega `GET /api/reportes/progreso/exportar` para
+  descargar el reporte en CSV o PDF (8b.2). CORS expone `Content-Disposition` para que el
+  frontend lea el nombre del archivo.
 
 El resto del documento no ha sido re-auditado desde el commit base.
 
-Este documento describe **unicamente los endpoints ya implementados**. El
-`/api/reportes` (docente, RF-25, RF-26) todavia no existe en el backend y no
-debe asumirse disponible por el frontend. Cuando se implemente, este
-documento se actualizara.
+Este documento describe **unicamente los endpoints ya implementados**.
 
 - URL base (desarrollo): `http://localhost:3000` — puerto por defecto de
   `PORT` en `.env.example`, configurable via variable de entorno.
@@ -1109,7 +1116,8 @@ evaluacion se bloquea para nuevos intentos. `intentosRestantes` cuenta contra
 ## 7. Usuarios — `/api/usuarios`
 
 Recurso agregado por DT-08, fuera del catalogo formal de RF (no hay un RF de
-reseteo administrativo de contrasena). Todas las rutas requieren autenticacion
+reseteo administrativo de contrasena), y ampliado con el listado de estudiantes de RF-25
+(DT-21). Todas las rutas requieren autenticacion
 y estan restringidas al rol `docente` (`autorizar("docente")`); un estudiante
 recibe `403`. Reutiliza el mecanismo transversal de RF-04.
 
@@ -1140,6 +1148,46 @@ el contexto y las limitaciones aceptadas).
 | `401` / `403` | Igual que el resto del grupo |
 | `404` | `UsuarioNoEncontradoError` — no existe un usuario con ese id |
 
+### 7.2 `GET /api/usuarios/estudiantes`
+
+Cubre RF-25 — CU-15 (DT-21). Lista los usuarios con rol `estudiante`, ordenados por
+`nombre` (y por `idUsuario` entre homonimos), con un resumen de su ruta vigente. Sirve
+para elegir el `idUsuario` al asignar una ruta (5.1), resetear una contrasena (7.1) o
+pedir el reporte de un estudiante (8b.1). Nunca incluye la contrasena cifrada.
+
+**Response `200 OK`** (sin estudiantes registrados, `[]`)
+
+```json
+[
+  {
+    "idUsuario": 3,
+    "nombre": "Beatriz Estudiante",
+    "correo": "beatriz@devopsedu.local",
+    "fechaRegistro": "2026-01-20T15:00:00.000Z",
+    "ruta": null
+  },
+  {
+    "idUsuario": 2,
+    "nombre": "Luis Estudiante",
+    "correo": "luis@devopsedu.local",
+    "fechaRegistro": "2026-01-15T15:00:00.000Z",
+    "ruta": {
+      "idRuta": 1,
+      "fechaAsignacion": "2026-02-01T10:00:00.000Z",
+      "progreso": 50,
+      "totalModulos": 2,
+      "modulosCompletados": 1
+    }
+  }
+]
+```
+
+`ruta` resume la misma ruta que devuelve el reporte de progreso (8b.1) y sale del mismo
+calculo: `progreso` y `modulosCompletados` coinciden con los de ese reporte y con los de
+`mi-ruta` (6.1). Para el detalle por modulo, actividad y evaluacion, usar 8b.1.
+
+**Errores posibles**: `401` / `403`, igual que el resto del grupo.
+
 ---
 
 ## 8. Recursos del servidor — `/api/servidor`
@@ -1165,6 +1213,152 @@ rol adicional (cualquier usuario autenticado, estudiante o docente).
 servicio: reflejan el uso de toda la maquina (SO, otros procesos, contenedores Docker).
 
 **Errores posibles**: `401` (token ausente/invalido).
+
+---
+
+## 8b. Reportes — `/api/reportes`
+
+Cubre RF-25 — CU-15 (DT-20). Todas las rutas requieren autenticacion y estan
+restringidas al rol `docente` (`autorizar("docente")`); un estudiante recibe `403`.
+El perfil investigador del diseno se descarto: los reportes son exclusivos del docente.
+
+### 8b.1 `GET /api/reportes/progreso`
+
+Progreso de los estudiantes: su ruta vigente (la asignada mas recientemente), el estado
+de cada modulo, las actividades completadas y el resumen de la evaluacion de cada modulo.
+El calculo usa las mismas reglas que `GET /api/aprendizaje/mi-ruta` (6.1), por lo que
+`estado` y `progreso` coinciden con lo que ve el estudiante. Es de solo lectura: a
+diferencia de `mi-ruta`, **no** actualiza el `progreso` persistido.
+
+**Query params**
+
+| Param | Tipo | Obligatorio | Uso |
+| --- | --- | --- | --- |
+| `idUsuario` | entero positivo | No | Limita el reporte a ese estudiante |
+
+**Response `200 OK`**: arreglo ordenado por `nombre` (y por `idUsuario` entre homonimos).
+Sin estudiantes registrados, `[]`.
+
+```json
+[
+  {
+    "idUsuario": 3,
+    "nombre": "Beatriz Estudiante",
+    "correo": "beatriz@devopsedu.local",
+    "fechaRegistro": "2026-01-20T15:00:00.000Z",
+    "ruta": null
+  },
+  {
+    "idUsuario": 2,
+    "nombre": "Luis Estudiante",
+    "correo": "luis@devopsedu.local",
+    "fechaRegistro": "2026-01-15T15:00:00.000Z",
+    "ruta": {
+      "idRuta": 1,
+      "fechaAsignacion": "2026-02-01T10:00:00.000Z",
+      "progreso": 100,
+      "modulos": [
+        {
+          "idModulo": 4,
+          "nombre": "Volumenes y persistencia",
+          "ordenSecuencia": 1,
+          "estado": "completado",
+          "fechaInicio": "2026-03-01T10:00:00.000Z",
+          "actividades": {
+            "completadas": 1,
+            "total": 1,
+            "detalle": [
+              {
+                "idActividad": 2,
+                "descripcion": "Despliega postgres con un volumen nombrado",
+                "fechaCompletada": "2026-03-02T10:00:00.000Z"
+              }
+            ]
+          },
+          "evaluacion": {
+            "idEvaluacion": 4,
+            "titulo": "Evaluacion: volumenes y persistencia",
+            "mejorNota": 80,
+            "intentos": 2,
+            "intentosMaximos": 2,
+            "aprobada": true
+          }
+        }
+      ]
+    }
+  }
+]
+```
+
+- `ruta` es `null` cuando el estudiante no tiene ninguna ruta asignada.
+- `estado` usa los mismos valores que `mi-ruta`: `"completado" | "en_progreso" | "sin_iniciar"`.
+- `actividades.detalle[].fechaCompletada` es la fecha del primer resultado del
+  estudiante en esa actividad, o `null` si esta pendiente (mismo criterio que DT-18).
+- `evaluacion` es `null` cuando el modulo no tiene evaluacion. `mejorNota` es la
+  puntuacion mas alta (0 a 100) o `null` si aun no la presenta; `aprobada` es
+  `mejorNota >= 70` (DT-11).
+
+**Errores posibles**
+
+| Codigo | Cuando |
+| --- | --- |
+| `400` | `idUsuario` no es un entero positivo (`{ "error": "Parametros de consulta invalidos" }`) |
+| `401` / `403` | Igual que el resto del grupo |
+| `404` | `UsuarioNoEncontradoError` — `idUsuario` no existe o no es un estudiante |
+
+### 8b.2 `GET /api/reportes/progreso/exportar`
+
+Cubre RF-25 — CU-16 (DT-22). Descarga el mismo reporte de 8b.1 como archivo.
+
+**Query params**
+
+| Param | Tipo | Obligatorio | Uso |
+| --- | --- | --- | --- |
+| `formato` | `"csv"` o `"pdf"` | Si | Formato del archivo |
+| `idUsuario` | entero positivo | No | Limita la exportacion a ese estudiante |
+
+**Response `200 OK`**: el cuerpo es el archivo, no JSON.
+
+| Formato | `Content-Type` | Nombre del archivo (`Content-Disposition: attachment`) |
+| --- | --- | --- |
+| `csv` | `text/csv; charset=utf-8` | `reporte-progreso-AAAA-MM-DD.csv` |
+| `pdf` | `application/pdf` | `reporte-progreso-AAAA-MM-DD.pdf` |
+
+Con `idUsuario`, el nombre pasa a `reporte-progreso-estudiante-<idUsuario>-AAAA-MM-DD.<formato>`.
+La fecha es la de generacion, en UTC. `Content-Disposition` esta expuesto por CORS, de modo
+que el frontend puede leerlo para proponer el nombre al guardar.
+
+**CSV**: UTF-8 con BOM (para que Excel muestre bien tildes y enies), separador coma y fin de
+registro CRLF (RFC 4180). Una fila por estudiante y modulo; un estudiante sin ruta ocupa una
+fila con las columnas de ruta y modulo vacias. Columnas, en este orden:
+
+```
+id_estudiante,estudiante,correo,fecha_asignacion_ruta,progreso_ruta,orden_modulo,modulo,
+estado_modulo,actividades_completadas,actividades_totales,evaluacion,mejor_nota,
+intentos_evaluacion,evaluacion_aprobada
+```
+
+- `fecha_asignacion_ruta` va en ISO 8601 UTC (`2026-02-01T10:00:00.000Z`).
+- `estado_modulo` usa los valores de la API (`completado`, `en_progreso`, `sin_iniciar`).
+- Las columnas de evaluacion quedan vacias si el modulo no tiene evaluacion;
+  `evaluacion_aprobada` es `si` o `no`.
+- Una celda de texto que empieza con `=`, `+`, `-`, `@`, tabulador o retorno de carro se
+  escribe con un apostrofo delante (`'=...`) para que la hoja de calculo no la ejecute como
+  formula.
+
+**PDF**: tamano carta. Encabezado con la fecha de generacion y el numero de estudiantes; por
+estudiante, su nombre y correo, la ruta (id, fecha de asignacion y progreso) y una tabla de
+modulos con estado, actividades completadas, mejor nota, intentos y si aprobo.
+
+**Errores posibles**
+
+| Codigo | Cuando |
+| --- | --- |
+| `400` | Falta `formato`, no es `csv` ni `pdf`, o `idUsuario` no es un entero positivo (`{ "error": "Parametros de consulta invalidos" }`) |
+| `401` / `403` | Igual que el resto del grupo |
+| `404` | `UsuarioNoEncontradoError` — `idUsuario` no existe o no es un estudiante |
+
+Los errores se responden en JSON, como en el resto de la API.
 
 ---
 
@@ -1221,17 +1415,16 @@ Referencia completa de las clases en `src/dominio/errores/`, su codigo HTTP y el
 No implementado aun en el backend (no invocar desde el frontend todavia):
 
 - Gestion de perfil propio del usuario (RF-04 como endpoint de autoservicio, p. ej.
-  `GET/PUT /api/usuarios/yo`). El unico endpoint implementado en `/api/usuarios` es
-  el reseteo administrativo de contrasena por el docente (DT-08, ver seccion 7).
+  `GET/PUT /api/usuarios/yo`). En `/api/usuarios` solo existen el reseteo
+  administrativo de contrasena (DT-08, 7.1) y el listado de estudiantes (DT-21, 7.2),
+  ambos exclusivos del docente.
 - Flujo de autoservicio "olvide mi contrasena" (sin RF asignado en el catalogo; ver
   DT-08 para la relacion con el reseteo administrativo actual).
-- `/api/reportes` (docente, RF-25, RF-26, CU-15, CU-16). Con RF-24 (ver
-  seccion 6.3) la Etapa 6 queda completa; `/api/reportes` es lo unico
-  pendiente de la Etapa 7.
 - WebSockets o *polling* de metricas en vivo: por ahora `GET
   /api/servicios/:id/metricas` solo expone el historico persistido por
   `MonitorPeriodico` (RF-16, RF-18, RF-19); no hay endpoint de "metrica actual" fuera
   de ese historico.
 
-Cuando el backend avance a la Etapa 7 (ver CLAUDE.md seccion 11), este documento
-debe actualizarse antes de que el frontend dependa de esos endpoints.
+Con la Etapa 7 el plan de etapas del backend (CLAUDE.md seccion 11) queda completo. Si
+alguno de estos puntos se implementa, este documento debe actualizarse antes de que el
+frontend dependa de el.

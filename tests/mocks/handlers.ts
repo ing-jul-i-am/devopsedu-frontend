@@ -1,6 +1,6 @@
 // Handlers por defecto de MSW para los grupos /api/auth, /api/servicios,
-// /api/servidor, /api/modulos, /api/rutas, /api/aprendizaje y /api/usuarios
-// (docs/contrato-api.md secciones 2, 3, 4, 5, 6, 7 y 8). Los tests de cada
+// /api/servidor, /api/modulos, /api/rutas, /api/aprendizaje, /api/usuarios y
+// /api/reportes (docs/contrato-api.md secciones 2, 3, 4, 5, 6, 7, 8 y 8b). Los tests de cada
 // flujo pueden sobrescribir cualquiera de estos handlers con
 // servidorMock.use() para probar casos particulares.
 import { http, HttpResponse, type HttpHandler } from "msw";
@@ -316,4 +316,18 @@ export const handlers: HttpHandler[] = [
   http.patch(`${configuracion.prefijoApi}/usuarios/:idUsuario/contrasena`, () =>
     HttpResponse.json({ mensaje: "Contrasena actualizada" })
   ),
+
+  http.get(`${configuracion.prefijoApi}/usuarios/estudiantes`, () => HttpResponse.json([])),
+
+  http.get(`${configuracion.prefijoApi}/reportes/progreso`, () => HttpResponse.json([])),
+
+  http.get(`${configuracion.prefijoApi}/reportes/progreso/exportar`, ({ request }) => {
+    const formato = new URL(request.url).searchParams.get("formato") ?? "csv";
+    return new HttpResponse(formato === "pdf" ? "%PDF-1.4" : "id_estudiante,estudiante\r\n", {
+      headers: {
+        "Content-Type": formato === "pdf" ? "application/pdf" : "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="reporte-progreso-2026-10-23.${formato}"`,
+      },
+    });
+  }),
 ];

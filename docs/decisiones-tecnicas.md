@@ -68,6 +68,7 @@
 
 ## DT-09: Identificación manual del estudiante en Gestión de estudiantes (RF-21, DT-08 del backend)
 
+**Estado:** superada por DT-20 (2026-10-23), al existir `GET /api/usuarios/estudiantes`.
 **Fecha:** 2026-09-12
 **Contexto:** Para asignar una ruta de aprendizaje (RF-21, CU-11, `POST /api/rutas`) el docente debe enviar el `idUsuario` del estudiante destino, y para el reseteo administrativo de contraseña (DT-08 del backend, `PATCH /api/usuarios/:id/contrasena`) también se requiere el id del usuario afectado. `docs/contrato-api.md` no expone ningún endpoint para listar usuarios o estudiantes (no hay `GET /api/usuarios`), así que el frontend no tiene forma de ofrecer un selector poblado con nombres reales.
 **Decisión:** `src/modulos/administracion/paginas/gestion-estudiantes.page.tsx` usa un campo numérico (`CampoTexto` tipo `number`) donde el docente ingresa directamente el `idUsuario`, con un texto de ayuda que explica la limitación. Se acordó esto con el usuario antes de implementar la vista.
@@ -175,3 +176,54 @@ El diseño inicial de esta vista pensaba construir el diálogo de confirmación 
 **Alternativas consideradas:**
 - Derivar el color de la actividad del `estado` del módulo (contrato 6.1). Descartada porque es impreciso: una actividad cumplida se vería pendiente mientras faltara aprobar la evaluación del módulo.
 - Importar `useMiRuta` directamente desde `BarraNavegacion`. Descartada para no acoplar un componente común a un módulo de dominio.
+
+## DT-18: Reportes y Exportación en una sola vista de resumen y detalle, exclusiva del docente (RF-25, CU-15, CU-16)
+
+**Fecha:** 2026-10-23
+**Contexto:** El backend implementó su Etapa 7 (DT-20 a DT-22 del backend, secciones 7.2 y 8b del contrato): `GET /api/usuarios/estudiantes`, `GET /api/reportes/progreso` y `GET /api/reportes/progreso/exportar`. `CLAUDE.md` listaba "Reportes" (CU-15) y "Exportación" (CU-16, atribuida a RF-26) como vistas separadas. El backend aclaró que el catálogo del diseño v1.13 termina en RF-25, de modo que ambas son casos de uso de RF-25, y que el perfil investigador del diseño se descartó. La exportación descarga exactamente el mismo reporte que se consulta. No hay mockup de estas vistas en el documento de diseño.
+
+**Decisión:**
+- **Una sola vista**, `src/modulos/administracion/paginas/reportes.page.tsx` (ruta `/administracion/reportes`), solo para el docente. Los botones de exportación respetan el filtro elegido en la misma vista. Así no hay que elegir dos veces al estudiante.
+- **Resumen y detalle:** un selector "Todos los estudiantes / un estudiante", guardado en la URL (`?idUsuario=N`) para poder compartirlo y recargarlo.
+  - **Con "Todos":** lista de estudiantes con su progreso y un resumen del grupo. Usa `GET /api/usuarios/estudiantes` (7.2) y no el reporte completo (8b.1), porque el backend calcula ambos igual (DT-21 del backend) y el selector ya carga el listado. Se evita una segunda petición con el detalle de todos los módulos.
+  - **Con un estudiante:** `GET /api/reportes/progreso?idUsuario=N` con el detalle por módulo: estado, actividades, mejor nota, intentos y si aprobó.
+- **Línea visual de DT-17:** tarjetas, filas como las del panel principal en lugar de tablas, tokens suaves de color y estados de carga, vacío y error dentro de cada tarjeta. Por coherencia y contraste (WCAG AA), `InsigniaEstadoModulo` pasa de `text-exito`/`text-advertencia` sobre fondo translúcido a los tokens `-suave` y `-texto`. Eso también cambia su aspecto en Mi ruta y en el contenido del módulo.
+
+**Consecuencias:**
+- La barra lateral suma "Reportes" en Administración.
+- `CLAUDE.md` (secciones 1 y 8) se corrigió: solo existen `estudiante` y `docente`, y la exportación es RF-25 / CU-16.
+- El resumen del grupo (total de estudiantes, cuántos tienen ruta y progreso promedio) se calcula en el frontend a partir de 7.2. Es una transformación de presentación, no una regla de negocio: el progreso de cada estudiante ya viene calculado.
+
+**Alternativas consideradas:**
+- Dos vistas separadas, como en la versión anterior de `CLAUDE.md`. Descartada por el usuario: duplica el selector de estudiante y exporta lo mismo que se consulta.
+- Todo en una página, con una tarjeta por estudiante con su tabla completa. Descartada porque se alarga con el grupo.
+- Una página de detalle aparte (`/administracion/reportes/:idUsuario`). Descartada porque el filtro en la URL da el mismo enlace directo sin una segunda vista.
+
+## DT-19: Descarga de archivos desde la API (RF-25, CU-16)
+
+**Fecha:** 2026-10-23
+**Contexto:** `GET /api/reportes/progreso/exportar` responde el archivo (CSV o PDF), no JSON, y propone su nombre en `Content-Disposition`, que el backend expone por CORS (DT-22 del backend). La petición necesita el token JWT, así que no basta con un enlace `<a href>`: debe pasar por `clienteHttp`.
+
+**Decisión:**
+- `use-exportar-reporte.ts` pide el archivo con `responseType: "blob"`.
+- `src/utilidades/descarga-archivo.ts` interpreta el nombre (`filename` y `filename*`) con un nombre por defecto si falta la cabecera. El archivo se guarda con un enlace temporal sobre `URL.createObjectURL`, que se libera al terminar.
+- Con `responseType: "blob"`, los errores (`400`, `404`) también llegan como un `Blob` que contiene el JSON de error. `normalizarErrorApiDescarga` (en `errores-api.ts`) lee ese texto y delega en `normalizarErrorApi`, para mostrar el mismo mensaje que en el resto de la aplicación.
+
+**Consecuencias:** No se agregan dependencias (RNF-20). El archivo completo pasa por memoria en el navegador; para el tamaño de grupo del prototipo son pocos kilobytes. Exportar no es irreversible, así que no lleva diálogo de confirmación (RNF-04 no aplica).
+
+**Alternativas consideradas:** Una biblioteca como `file-saver`. Descartada: el mecanismo nativo cubre los navegadores objetivo en pocas líneas probadas.
+
+## DT-20: Selector de estudiantes y nuevo aspecto de Gestión de estudiantes (RF-21, RF-25, CU-11; supera a DT-09)
+
+**Fecha:** 2026-10-23
+**Contexto:** DT-09 resolvió la falta de un listado de usuarios con un campo numérico de `idUsuario`. El backend agregó `GET /api/usuarios/estudiantes` (7.2 del contrato, DT-21 del backend), con nombre, correo y un resumen de la ruta vigente de cada estudiante. La vista además conservaba el estilo anterior a DT-17.
+
+**Decisión:**
+- El campo manual se reemplaza por un `CampoSelector` "Estudiante" con opciones `Nombre (correo)`.
+- Al elegir un estudiante se muestra su ruta vigente (barra de progreso y módulos completados) o "Sin ruta asignada", para que el docente sepa que asignar crea una ruta nueva.
+- La vista se reorganiza en tarjetas con la línea visual de DT-17. La combinación de DT-10 se mantiene: asignar ruta y restablecer contraseña conviven en la vista y comparten el estudiante elegido.
+- `useAsignarRuta` invalida el listado y el reporte al asignar, para que el progreso mostrado se actualice.
+
+**Consecuencias:** DT-09 queda superada. Los textos visibles de la vista pasan a llevar tildes y eñes, como el resto de las vistas de DT-17, y sus pruebas se actualizaron.
+
+**Alternativas consideradas:** Una tabla de estudiantes con acciones por fila. Descartada por el usuario por ahora: rehace la vista sin un beneficio claro para el tamaño del grupo.

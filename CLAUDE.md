@@ -11,6 +11,7 @@ Este archivo orienta a Claude Code en el desarrollo del frontend de la plataform
 - **Nombre:** Plataforma Educativa para Gestión DevOps (DevOpsEdu)
 - **Autor:** Julian Andrés Barrera García — Universidad Mariano Gálvez de Guatemala
 - **Repositorio asociado:** Frontend (`devopsedu-frontend`). El backend vive en `devopsedu-backend`.
+- **Roles:** solo existen `estudiante` y `docente`. El perfil investigador del diseño (sección 4.1.7.3) se descartó: la consulta y exportación de reportes (RF-25, CU-15, CU-16) es exclusiva del docente.
 - **Propósito de la capa de presentación:** ofrecer una interfaz gráfica educativa que sustituya la complejidad de la línea de comandos por formularios guiados, validaciones inmediatas y visualizaciones del estado y consumo de servicios.
 
 El diseño formal se encuentra en `Diseño_tecnico_de_proyecto.pdf`. Cuando una decisión visual o de interacción no esté cubierta por este CLAUDE.md, consulta primero esa fuente.
@@ -375,7 +376,9 @@ Todos los endpoints del backend se mockean con MSW en `tests/mocks/handlers.ts`.
 | Administración | Gestión de módulos | RF-20 | CU-10 |
 | Administración | Asignación de rutas | RF-21 | CU-11 |
 | Administración | Reportes | RF-25 | CU-15 |
-| Administración | Exportación | RF-26 | CU-16 |
+| Administración | Exportación | RF-25 | CU-16 |
+
+Reportes y Exportación se sirven desde una sola vista, `/administracion/reportes` (DT-18). El catálogo del diseño v1.13 termina en RF-25: no existe un RF-26, y la exportación es el CU-16 de RF-25.
 
 Al crear una vista nueva, registra en un comentario al inicio del archivo y de su archivo de pruebas los RF y CU que cubre.
 
