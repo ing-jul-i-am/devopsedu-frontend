@@ -3,6 +3,7 @@
 // resto de modulos).
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { Download } from "lucide-react";
 import { Boton } from "@/componentes-comunes/boton";
 
 describe("Boton", () => {
@@ -24,5 +25,12 @@ describe("Boton", () => {
     render(<Boton variante="peligro">Eliminar</Boton>);
 
     expect(screen.getByRole("button", { name: "Eliminar" })).toHaveClass("bg-peligro");
+  });
+
+  it("muestra un icono decorativo junto al texto sin cambiar su nombre accesible", () => {
+    render(<Boton icono={Download}>Exportar CSV</Boton>);
+
+    const boton = screen.getByRole("button", { name: "Exportar CSV" });
+    expect(boton.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
 });

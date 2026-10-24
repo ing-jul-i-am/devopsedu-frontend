@@ -11,9 +11,12 @@ export function useReporteProgreso(idUsuario: number | null) {
   return useQuery({
     queryKey: ["reporte-progreso", idUsuario],
     queryFn: async () => {
-      const { data } = await clienteHttp.get<ReporteProgresoEstudiante[]>("/reportes/progreso", {
-        params: { idUsuario },
-      });
+      const { data } = await clienteHttp.get<ReporteProgresoEstudiante[]>(
+        "/reportes/progreso",
+        {
+          params: { idUsuario },
+        }
+      );
       return data[0] ?? null;
     },
     enabled: idUsuario !== null,

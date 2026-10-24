@@ -45,11 +45,16 @@ export function ListaProgresoEstudiantes({ estudiantes }: Props) {
                 >
                   {estudiante.nombre}
                 </Link>
-                <span className="truncate text-xs text-texto-secundario">{estudiante.correo}</span>
+                <span className="truncate text-xs text-texto-secundario">
+                  {estudiante.correo}
+                </span>
               </div>
             </div>
             <div className="flex w-full sm:w-64">
-              <ProgresoRutaEstudiante nombreEstudiante={estudiante.nombre} ruta={estudiante.ruta} />
+              <ProgresoRutaEstudiante
+                nombreEstudiante={estudiante.nombre}
+                ruta={estudiante.ruta}
+              />
             </div>
           </li>
         ))}

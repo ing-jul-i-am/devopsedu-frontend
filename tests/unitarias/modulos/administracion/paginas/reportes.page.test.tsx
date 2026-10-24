@@ -1,5 +1,6 @@
-// Cubre: RF-25 — CU-15 (consulta del reporte de progreso, DT-18)
-import { describe, it, expect } from "vitest";
+// Cubre: RF-25 — CU-15 (consulta del reporte de progreso, DT-18) y CU-16
+// (exportacion en CSV o PDF, DT-19)
+import { afterEach, describe, it, expect } from "vitest";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
@@ -10,11 +11,13 @@ import {
   crearModuloReporteDePrueba,
   crearReporteEstudianteDePrueba,
 } from "../../../../fixtures/reporte.factory";
+import { simularDescarga } from "../../../../ayudas/simular-descarga";
 import { ReportesPage } from "@/modulos/administracion/paginas/reportes.page";
 import { configuracion } from "@/infraestructura/configuracion";
 
 const rutaEstudiantes = `${configuracion.prefijoApi}/usuarios/estudiantes`;
 const rutaReporte = `${configuracion.prefijoApi}/reportes/progreso`;
+const rutaExportar = `${configuracion.prefijoApi}/reportes/progreso/exportar`;
 const RUTA_VISTA = "/administracion/reportes";
 
 const LUIS = crearEstudianteListadoDePrueba({
@@ -117,13 +120,19 @@ describe("ReportesPage", () => {
 
     await screen.findByRole("link", { name: "Luis Estudiante" });
     const lista = screen.getByRole("region", { name: "Estudiantes" });
-    expect(within(lista).getByText(/2 estudiantes · 1 con ruta asignada/i)).toBeInTheDocument();
+    expect(
+      within(lista).getByText(/2 estudiantes · 1 con ruta asignada/i)
+    ).toBeInTheDocument();
     expect(within(lista).getByRole("link", { name: "Luis Estudiante" })).toBeInTheDocument();
     expect(
-      within(lista).getByRole("progressbar", { name: /progreso de la ruta de luis estudiante/i })
+      within(lista).getByRole("progressbar", {
+        name: /progreso de la ruta de luis estudiante/i,
+      })
     ).toBeInTheDocument();
     expect(within(lista).getByText(/1 de 2 módulos completados/i)).toBeInTheDocument();
-    expect(within(lista).getByRole("link", { name: "Beatriz Estudiante" })).toBeInTheDocument();
+    expect(
+      within(lista).getByRole("link", { name: "Beatriz Estudiante" })
+    ).toBeInTheDocument();
     expect(within(lista).getByText(/sin ruta asignada/i)).toBeInTheDocument();
   });
 
@@ -155,7 +164,9 @@ describe("ReportesPage", () => {
     const detalle = await screen.findByRole("region", { name: "Luis Estudiante" });
     expect(consultas).toEqual(["5"]);
     expect(screen.getByLabelText("Estudiante")).toHaveValue("5");
-    expect(within(detalle).getByText("luis@devopsedu.local", { exact: false })).toBeInTheDocument();
+    expect(
+      within(detalle).getByText("luis@devopsedu.local", { exact: false })
+    ).toBeInTheDocument();
     expect(within(detalle).getByText(/1 de 2 módulos completados/i)).toBeInTheDocument();
 
     const modulos = within(detalle).getAllByRole("listitem");
@@ -170,7 +181,9 @@ describe("ReportesPage", () => {
     expect(within(segundo).getByText("En progreso")).toBeInTheDocument();
     expect(within(segundo).getByText("Actividades 0 de 1")).toBeInTheDocument();
     expect(within(segundo).getByText("No aprobada")).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Resumen del grupo" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Resumen del grupo" })
+    ).not.toBeInTheDocument();
   });
 
   it("cambia de estudiante desde el selector y vuelve a la lista completa", async () => {
@@ -244,7 +257,13 @@ describe("ReportesPage", () => {
 
   it("indica cuando el estudiante elegido no tiene ruta y ofrece asignarle una", async () => {
     usarEstudiantes();
-    usarReporte(crearReporteEstudianteDePrueba({ idUsuario: 3, nombre: "Beatriz Estudiante", ruta: null }));
+    usarReporte(
+      crearReporteEstudianteDePrueba({
+        idUsuario: 3,
+        nombre: "Beatriz Estudiante",
+        ruta: null,
+      })
+    );
 
     renderizarConProveedores(<ReportesPage />, { rutaInicial: `${RUTA_VISTA}?idUsuario=3` });
 
@@ -268,5 +287,103 @@ describe("ReportesPage", () => {
     renderizarConProveedores(<ReportesPage />, { rutaInicial: `${RUTA_VISTA}?idUsuario=99` });
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/usuario no encontrado/i);
+  });
+
+  describe("exportacion", () => {
+    let simulacion: ReturnType<typeof simularDescarga>;
+
+    afterEach(() => {
+      simulacion.restaurar();
+    });
+
+    function usarExportacion(nombreArchivo: string) {
+      const consultas: { formato: string | null; idUsuario: string | null }[] = [];
+      servidorMock.use(
+        http.get(rutaExportar, ({ request }) => {
+          const parametros = new URL(request.url).searchParams;
+          consultas.push({
+            formato: parametros.get("formato"),
+            idUsuario: parametros.get("idUsuario"),
+          });
+          return new HttpResponse("id_estudiante,estudiante\r\n", {
+            headers: {
+              "Content-Type": "text/csv; charset=utf-8",
+              "Content-Disposition": `attachment; filename="${nombreArchivo}"`,
+            },
+          });
+        })
+      );
+      return consultas;
+    }
+
+    it("exporta el reporte de todos los estudiantes en CSV", async () => {
+      simulacion = simularDescarga();
+      const usuario = userEvent.setup();
+      usarEstudiantes();
+      const consultas = usarExportacion("reporte-progreso-2026-10-23.csv");
+
+      renderizarConProveedores(<ReportesPage />, { rutaInicial: RUTA_VISTA });
+
+      const exportar = await screen.findByRole("region", { name: "Exportar reporte" });
+      expect(
+        within(exportar).getByText(/incluye a todos los estudiantes/i)
+      ).toBeInTheDocument();
+      await usuario.click(within(exportar).getByRole("button", { name: /exportar csv/i }));
+
+      expect(
+        await within(exportar).findByText(/se descargó reporte-progreso-2026-10-23.csv/i)
+      ).toBeInTheDocument();
+      expect(consultas).toEqual([{ formato: "csv", idUsuario: null }]);
+      expect(simulacion.descargas.map((descarga) => descarga.nombre)).toEqual([
+        "reporte-progreso-2026-10-23.csv",
+      ]);
+      expect(await simulacion.descargas[0]?.contenido.text()).toBe(
+        "id_estudiante,estudiante\r\n"
+      );
+    });
+
+    it("exporta en PDF solo al estudiante elegido", async () => {
+      simulacion = simularDescarga();
+      const usuario = userEvent.setup();
+      usarEstudiantes();
+      usarReporte();
+      const consultas = usarExportacion("reporte-progreso-estudiante-5-2026-10-23.pdf");
+
+      renderizarConProveedores(<ReportesPage />, { rutaInicial: `${RUTA_VISTA}?idUsuario=5` });
+
+      const exportar = await screen.findByRole("region", { name: "Exportar reporte" });
+      expect(
+        await within(exportar).findByText(/incluye solo a luis estudiante/i)
+      ).toBeInTheDocument();
+      await usuario.click(within(exportar).getByRole("button", { name: /exportar pdf/i }));
+
+      expect(
+        await within(exportar).findByText(
+          /se descargó reporte-progreso-estudiante-5-2026-10-23.pdf/i
+        )
+      ).toBeInTheDocument();
+      expect(consultas).toEqual([{ formato: "pdf", idUsuario: "5" }]);
+    });
+
+    it("muestra el error del backend cuando la exportacion falla", async () => {
+      simulacion = simularDescarga();
+      const usuario = userEvent.setup();
+      usarEstudiantes();
+      servidorMock.use(
+        http.get(rutaExportar, () =>
+          HttpResponse.json({ error: "Parametros de consulta invalidos" }, { status: 400 })
+        )
+      );
+
+      renderizarConProveedores(<ReportesPage />, { rutaInicial: RUTA_VISTA });
+
+      const exportar = await screen.findByRole("region", { name: "Exportar reporte" });
+      await usuario.click(within(exportar).getByRole("button", { name: /exportar csv/i }));
+
+      expect(await within(exportar).findByRole("alert")).toHaveTextContent(
+        /parametros de consulta invalidos/i
+      );
+      expect(simulacion.descargas).toEqual([]);
+    });
   });
 });

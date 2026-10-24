@@ -186,7 +186,11 @@ export function DetalleProgresoEstudiante({ idUsuario }: { idUsuario: number }) 
         </p>
       }
     >
-      {reporte.ruta ? <Ruta nombreEstudiante={reporte.nombre} ruta={reporte.ruta} /> : <SinRuta />}
+      {reporte.ruta ? (
+        <Ruta nombreEstudiante={reporte.nombre} ruta={reporte.ruta} />
+      ) : (
+        <SinRuta />
+      )}
       <VolverATodos />
     </Tarjeta>
   );

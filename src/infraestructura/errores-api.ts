@@ -59,3 +59,26 @@ function esRecursoCantidad(valor: unknown): valor is RecursoCantidad {
     typeof valor["almacenamiento"] === "number"
   );
 }
+
+/**
+ * En una descarga (`responseType: "blob"`) el cuerpo de un error tambien llega
+ * como Blob, aunque contenga el JSON de error de la API (DT-19). Se lee su
+ * texto antes de normalizarlo para mostrar el mismo mensaje que en el resto
+ * de la aplicacion.
+ */
+export async function normalizarErrorApiDescarga(error: unknown): Promise<ErrorApi> {
+  if (!isAxiosError(error) || !(error.response?.data instanceof Blob)) {
+    return normalizarErrorApi(error);
+  }
+
+  try {
+    const datos: unknown = JSON.parse(await error.response.data.text());
+    return normalizarErrorApi({
+      ...error,
+      isAxiosError: true,
+      response: { ...error.response, data: datos },
+    });
+  } catch {
+    return { mensaje: MENSAJE_GENERICO };
+  }
+}

@@ -4,7 +4,7 @@
  * para que los formularios muestren mensajes claros y orientativos.
  */
 import { describe, expect, it } from "vitest";
-import { normalizarErrorApi } from "@/infraestructura/errores-api";
+import { normalizarErrorApi, normalizarErrorApiDescarga } from "@/infraestructura/errores-api";
 
 function crearErrorAxios(status: number, data: unknown): unknown {
   return {
@@ -68,6 +68,40 @@ describe("normalizarErrorApi", () => {
 
   it("usa un mensaje de conectividad cuando el error no proviene de axios", () => {
     const resultado = normalizarErrorApi(new Error("fallo desconocido"));
+
+    expect(resultado.mensaje).toBe("No fue posible comunicarse con el servidor");
+  });
+});
+
+describe("normalizarErrorApiDescarga (DT-19)", () => {
+  it("lee el error JSON que llega dentro de un Blob en una descarga", async () => {
+    const cuerpo = new Blob([JSON.stringify({ error: "Usuario no encontrado" })], {
+      type: "application/json",
+    });
+
+    const resultado = await normalizarErrorApiDescarga(crearErrorAxios(404, cuerpo));
+
+    expect(resultado.mensaje).toBe("Usuario no encontrado");
+  });
+
+  it("usa el mensaje generico cuando el Blob no contiene JSON", async () => {
+    const cuerpo = new Blob(["<html>error</html>"], { type: "text/html" });
+
+    const resultado = await normalizarErrorApiDescarga(crearErrorAxios(500, cuerpo));
+
+    expect(resultado.mensaje).toBe("Ocurrio un error inesperado");
+  });
+
+  it("se comporta igual que normalizarErrorApi cuando el cuerpo no es un Blob", async () => {
+    const resultado = await normalizarErrorApiDescarga(
+      crearErrorAxios(400, { error: "Parametros de consulta invalidos" })
+    );
+
+    expect(resultado.mensaje).toBe("Parametros de consulta invalidos");
+  });
+
+  it("indica que no hubo comunicacion cuando no hay respuesta", async () => {
+    const resultado = await normalizarErrorApiDescarga(new Error("Network Error"));
 
     expect(resultado.mensaje).toBe("No fue posible comunicarse con el servidor");
   });

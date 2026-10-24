@@ -3,11 +3,12 @@
 // Exportacion se sirven desde esta misma vista, y el estudiante elegido vive
 // en la URL (?idUsuario=N) para poder compartirlo y recargarlo (DT-18). Sigue
 // la linea visual del panel principal (DT-17).
-// Cubre: RF-25, RNF-03, RNF-05 — CU-15
+// Cubre: RF-25, RNF-03, RNF-05 — CU-15, CU-16
 import { useSearchParams } from "react-router-dom";
 import { CampoSelector } from "@/componentes-comunes/campo-selector";
 import { Tarjeta } from "@/componentes-comunes/tarjeta";
 import { useEstudiantes } from "../hooks/use-estudiantes";
+import { AccionesExportacion } from "../componentes/acciones-exportacion";
 import { DetalleProgresoEstudiante } from "../componentes/detalle-progreso-estudiante";
 import { ListaProgresoEstudiantes } from "../componentes/lista-progreso-estudiantes";
 import { SinEstudiantes } from "../componentes/sin-estudiantes";
@@ -86,6 +87,15 @@ export function ReportesPage() {
         <div className="flex flex-col gap-lg">
           {idUsuario === null && estudiantes && estudiantes.length > 0 ? (
             <TarjetaResumenGrupo estudiantes={estudiantes} />
+          ) : null}
+          {estudiantes && estudiantes.length > 0 ? (
+            <AccionesExportacion
+              key={idUsuario ?? "todos"}
+              idUsuario={idUsuario}
+              nombreEstudiante={
+                estudiantes.find((estudiante) => estudiante.idUsuario === idUsuario)?.nombre
+              }
+            />
           ) : null}
         </div>
       </div>

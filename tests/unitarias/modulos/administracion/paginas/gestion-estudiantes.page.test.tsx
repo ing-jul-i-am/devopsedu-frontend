@@ -55,7 +55,10 @@ function usarEstudiantes() {
   servidorMock.use(http.get(rutaEstudiantes, () => HttpResponse.json([BEATRIZ, LUIS])));
 }
 
-async function elegirEstudiante(usuario: ReturnType<typeof userEvent.setup>, idUsuario: number) {
+async function elegirEstudiante(
+  usuario: ReturnType<typeof userEvent.setup>,
+  idUsuario: number
+) {
   await screen.findByRole("option", { name: "Luis Estudiante (luis@devopsedu.local)" });
   await usuario.selectOptions(screen.getByLabelText("Estudiante"), String(idUsuario));
 }
@@ -125,8 +128,9 @@ describe("GestionEstudiantesPage", () => {
     renderizarConProveedores(<GestionEstudiantesPage />);
 
     await elegirEstudiante(usuario, 5);
-    expect(screen.getByRole("progressbar", { name: /progreso de la ruta de luis estudiante/i }))
-      .toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", { name: /progreso de la ruta de luis estudiante/i })
+    ).toBeInTheDocument();
     expect(screen.getByText("50%")).toBeInTheDocument();
     expect(screen.getByText(/1 de 2 módulos completados/i)).toBeInTheDocument();
 
@@ -153,7 +157,13 @@ describe("GestionEstudiantesPage", () => {
         const cuerpo = (await request.json()) as { idUsuario: number; idModulos: number[] };
         expect(cuerpo).toEqual({ idUsuario: 5, idModulos: [2, 1] });
         return HttpResponse.json(
-          { idRuta: 1, idUsuario: 5, progreso: 0, fechaAsignacion: "2026-08-28T00:00:00.000Z", modulos: [] },
+          {
+            idRuta: 1,
+            idUsuario: 5,
+            progreso: 0,
+            fechaAsignacion: "2026-08-28T00:00:00.000Z",
+            modulos: [],
+          },
           { status: 201 }
         );
       })
@@ -211,6 +221,8 @@ describe("GestionEstudiantesPage", () => {
     await usuario.click(screen.getByRole("button", { name: /restablecer contraseña/i }));
     await usuario.click(screen.getByRole("button", { name: /^restablecer$/i }));
 
-    expect(await screen.findByText(/contraseña actualizada correctamente/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/contraseña actualizada correctamente/i)
+    ).toBeInTheDocument();
   });
 });
