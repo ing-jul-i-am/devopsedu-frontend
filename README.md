@@ -120,13 +120,14 @@ El proyecto sigue TDD (ver `.claude/skills/ciclo-tdd`): toda funcionalidad nueva
 | Aprendizaje | Evaluación | `/aprendizaje/modulos/:idModulo/evaluacion` | Estudiante | RF-24, CU-14 |
 | Administración | Gestión de módulos | `/administracion/modulos` | Docente | RF-20, CU-10 |
 | Administración | Crear y editar módulo | `/administracion/modulos/nuevo`, `/administracion/modulos/:idModulo` | Docente | RF-20, RF-23, RF-24, CU-10 |
-| Administración | Gestión de estudiantes | `/administracion/estudiantes` | Docente | RF-21, CU-11 |
+| Administración | Gestión de estudiantes | `/administracion/estudiantes` | Docente | RF-21, RF-25, CU-11 |
+| Administración | Reportes y exportación (CSV o PDF) | `/administracion/reportes` | Docente | RF-25, CU-15, CU-16 |
 
 Cada vista lleva en su cabecera los RF y CU que cubre. Las rutas se definen en `src/enrutamiento/rutas.tsx`, y el menú lateral, en `src/componentes-comunes/barra-navegacion.tsx`.
 
 ## Estado
 
-Implementados los cinco módulos de interfaz, salvo **Reportes** y **Exportación** (RF-25, RF-26, CU-15, CU-16), que esperan a que el backend implemente `/api/reportes`. También dependen del backend la edición del perfil propio (RF-04, `DT-03`) y el listado de usuarios en Gestión de estudiantes (`DT-09`). El detalle por etapa está en [`docs/plan-de-desarrollo.md`](docs/plan-de-desarrollo.md).
+Implementados los cinco módulos de interfaz, con una vista para cada RF del catálogo del diseño (RF-01 a RF-25). Reportes y Exportación comparten la vista `/administracion/reportes` (`DT-18`). Solo existen los roles `estudiante` y `docente`: el perfil investigador del diseño se descartó. Siguen pendientes del backend la edición del perfil propio (RF-04, `DT-03`) y la comparación exacta de la imagen Docker al evaluar actividades (`DT-14`). El detalle por etapa está en [`docs/plan-de-desarrollo.md`](docs/plan-de-desarrollo.md).
 
 ## Documentación
 

@@ -13,17 +13,18 @@
 | Mejora transversal — Navegación y panel principal (RNF-03) | Completa | `dec4ebc` |
 | Etapa 3 — Módulo Monitoreo | Completa | `1e237f5` |
 | Etapa 4 — Módulo Aprendizaje (estudiante) | Completa | `5d08be3`, `90417cb`, `14fb0e8` |
-| Etapa 5 — Módulo Administración (parcial: módulos y estudiantes) | Completa; Reportes/Exportación pendientes (backend no implementado) | `5d08be3` |
+| Etapa 5 — Módulo Administración (módulos y estudiantes) | Completa | `5d08be3` |
 | Mejora transversal — Configuración avanzada de servicios y nuevo ciclo de vida de contenedores (DT-13 a DT-16) | Completa | `d315318` |
 | Mejora transversal — Estado visual de actividades, barra lateral por categorías y panel principal con datos (DT-17) | Completa | `5317f9f`, `29a626e`, `1373b2d`, `b39a284`, `2d57459` |
+| Etapa 5b — Reportes, Exportación y listado de estudiantes (RF-25, CU-15, CU-16, DT-18 a DT-20) | Completa; pendiente la verificación manual del usuario | `72a9287`, `5fc6c61`, `a42ceab`, `ed619bb` |
 
-**Próximo paso concreto (actualizado 2026-10-23):** todo lo construible contra el backend actual está implementado y verificado manualmente por el usuario contra el backend real, incluidas las vistas de DT-17 (estado de las actividades, barra lateral por categorías y panel principal con datos). En el frontend no queda trabajo pendiente hasta que el backend avance. Lo único pendiente del catálogo es `/api/reportes` (RF-25, RF-26, CU-15, CU-16): el backend todavía no lo implementa (ver sección 10 de `docs/contrato-api.md`; confirmado el 2026-10-23 en `devopsedu-backend`, rama `cuarta-semana`, sin archivo de rutas de reportes en `src/api/rutas/`), así que **Reportes** y **Exportación** quedan bloqueadas hasta que el backend avance a su Etapa 7. Próximo paso cuando eso ocurra: repetir el mismo procedimiento (leer el contrato actualizado, confirmar decisiones pendientes con el usuario, TDD por vista) para esas dos vistas. Al diseñarlas, decidir con el usuario cómo se trata el modo lectura para el rol investigador que menciona RF-25: hoy `src/tipos/roles.ts` solo contempla `estudiante` y `docente`.
+**Próximo paso concreto (actualizado 2026-10-23):** el backend completó su Etapa 7 (`/api/reportes` y `GET /api/usuarios/estudiantes`, secciones 7.2 y 8b de `docs/contrato-api.md`) y el frontend ya la integra en la Etapa 5b: vista de Reportes con exportación en CSV o PDF y selector de estudiantes en Gestión de estudiantes. Con esto, todo el catálogo de RF del diseño (RF-01 a RF-25; no existe RF-26) tiene su vista. Falta la **verificación manual del usuario** de la Etapa 5b con `npm run dev` contra el backend real (ver la lista al final de la sección de la Etapa 5b). Si aparecen hallazgos, se corrigen con el mismo procedimiento TDD.
 
-Otros pendientes, también bloqueados por el backend: edición de perfil (RF-04, ver `DT-03`), endpoint de listado de usuarios para reemplazar el campo manual de `idUsuario` (ver `DT-09`) y la comparación exacta de `imagenDocker` en la evaluación de actividades (ver `DT-14`).
+Pendientes que siguen bloqueados por el backend: edición de perfil (RF-04, ver `DT-03`) y la comparación exacta de `imagenDocker` en la evaluación de actividades (ver `DT-14`). El listado de usuarios de `DT-09` ya está resuelto (`DT-20`).
 
 **Integración en `main`:** todo el trabajo vive en la rama `cuarta-semana` (subida a `origin`); `main` solo contiene los tres primeros commits. Por decisión del usuario (2026-10-23), el PR de `cuarta-semana` a `main` se pospone hasta retomar el desarrollo con el backend listo.
 
-Mejoras opcionales detectadas en las revisiones del 2026-10-10 y 2026-10-23, sin urgencia: el bundle de producción pesa ~1.5 MB (Vite advierte por superar 500 kB; candidatos a `React.lazy`: el editor TipTap y las gráficas de Recharts), React Router emite advertencias de las banderas `v7_startTransition` y `v7_relativeSplatPath` en las pruebas, y el `README.md` podría ampliarse con la puesta en marcha contra el backend y un mapa de vistas (RNF-16), como ya tiene el backend.
+Mejoras opcionales detectadas en las revisiones del 2026-10-10 y 2026-10-23, sin urgencia: alinear las vistas que todavía usan el estilo anterior a DT-17 (`panel-modulos.page.tsx`, `crear-modulo.page.tsx`, `editar-modulo.page.tsx`, `mi-ruta.page.tsx`, entre otras) con tarjetas y el encabezado del panel principal; el bundle de producción pesa ~1.5 MB (Vite advierte por superar 500 kB; candidatos a `React.lazy`: el editor TipTap y las gráficas de Recharts), React Router emite advertencias de las banderas `v7_startTransition` y `v7_relativeSplatPath` en las pruebas, y 44 archivos preexistentes no siguen el formato de Prettier (`npm run format` los corregiría en un commit `style` aparte).
 
 **Hallazgos de la verificación manual (usuario, 2026-09-12) y su resolución:**
 
@@ -48,10 +49,10 @@ Las cuatro correcciones fueron verificadas manualmente por el usuario contra el 
 
 El repositorio `devopsedu-frontend` partió vacío, con solo `CLAUDE.md` y `.claude/skills/`. Durante la sesión de planificación se incorporaron dos fuentes adicionales:
 
-1. El documento de diseño técnico completo (`.claude/Proyecto de Julian Barrera v1.13.md`), del que se extrajo el catálogo de RF-01 a RF-26 y RNF-01 a RNF-25, la especificación de 6 de los 16 casos de uso, el diagrama de estados del `Servicio` (7 estados), el diagrama de componentes (interfaz `IRestAPI` conceptual) y el modelo de datos.
+1. El documento de diseño técnico completo (`.claude/Proyecto de Julian Barrera v1.13.md`), del que se extrajo el catálogo de RF-01 a RF-25 (el diseño v1.13 no tiene RF-26, aclarado por el backend en la Etapa 7) y RNF-01 a RNF-25, la especificación de 6 de los 16 casos de uso, el diagrama de estados del `Servicio` (7 estados), el diagrama de componentes (interfaz `IRestAPI` conceptual) y el modelo de datos.
 2. **`docs/contrato-api.md`** — el contrato real de la API del backend (`devopsedu-backend`, rama `segunda-semana`, commit `04f88c2`). Este documento **reemplaza cualquier inferencia** hecha a partir del documento de diseño para los grupos ya implementados: `/api/auth`, `/api/servicios`, `/api/servidor`. Es la fuente autoritativa para el cliente HTTP, los hooks de TanStack Query y los mocks de MSW de esos tres módulos.
 
-**Hallazgo clave del contrato de API (histórico, ya superado):** en su versión original, el backend solo tenía implementados los grupos de Sesión (`/api/auth`), Servicios (`/api/servicios`) y Recursos del servidor (`/api/servidor`); Aprendizaje y Administración no existían todavía. Eso cambió con la rama `cuarta-semana` del backend (Etapa 6 del backend, RF-20 a RF-24): `/api/modulos`, `/api/rutas`, `/api/aprendizaje/*` y `/api/usuarios` (DT-08 del backend) ya están implementados, así que las Etapas 4 y 5 (salvo Reportes/Exportación, RF-25/RF-26, que siguen sin backend) también se construyeron integradas contra la API real, igual que las Etapas 1-3.
+**Hallazgo clave del contrato de API (histórico, ya superado):** en su versión original, el backend solo tenía implementados los grupos de Sesión (`/api/auth`), Servicios (`/api/servicios`) y Recursos del servidor (`/api/servidor`); Aprendizaje y Administración no existían todavía. Eso cambió con la rama `cuarta-semana` del backend (Etapa 6 del backend, RF-20 a RF-24): `/api/modulos`, `/api/rutas`, `/api/aprendizaje/*` y `/api/usuarios` (DT-08 del backend) ya están implementados, así que las Etapas 4 y 5 también se construyeron integradas contra la API real, igual que las Etapas 1-3. Reportes y Exportación (RF-25) llegaron después, con la Etapa 7 del backend (Etapa 5b de este plan).
 
 **Discrepancia resuelta:** el mockup "Vista 02 — Registro" muestra un campo **ROL (selector)**, pero el contrato de API confirma que **el rol no se acepta desde el cliente** — el backend siempre asigna `estudiante` en el registro. Decisión tomada: omitir el campo en la implementación real (documentado como `DT-01` en `docs/decisiones-tecnicas.md`, junto con el resto de decisiones técnicas registradas hasta ahora).
 
@@ -157,9 +158,9 @@ El backend avanzó a la rama `cuarta-semana` e implementó de verdad `/api/apren
 
 ---
 
-## Etapa 5 — Módulo Administración (RF-20, RF-21, CU-10, CU-11) — COMPLETA (parcial, `5d08be3`); Reportes/Exportación pendientes
+## Etapa 5 — Módulo Administración (RF-20, RF-21, CU-10, CU-11) — COMPLETA (`5d08be3`)
 
-El backend implementó `/api/modulos` y `/api/rutas` (Etapa 6 del backend) además de `/api/usuarios` (DT-08 del backend). `/api/reportes` (RF-25, RF-26, CU-15, CU-16) **sigue sin implementarse** — ver sección 10 del contrato — así que Reportes y Exportación quedan fuera de esta etapa hasta que el backend avance a su Etapa 7.
+El backend implementó `/api/modulos` y `/api/rutas` (Etapa 6 del backend) además de `/api/usuarios` (DT-08 del backend). `/api/reportes` (RF-25, CU-15, CU-16) no existía todavía, así que Reportes y Exportación se construyeron después, en la Etapa 5b.
 
 - [x] **Gestión de módulos** — RF-20, CU-10:
   - `panel-modulos.page.tsx` (ruta `/administracion/modulos`) — `GET /api/modulos`.
@@ -167,17 +168,14 @@ El backend implementó `/api/modulos` y `/api/rutas` (Etapa 6 del backend) adem�
   - Editor de bloques (`componentes/editor-bloques.tsx`): agregar/quitar/reordenar bloques de texto, imagen, enlace y actividad. El bloque `imagen` sube el archivo a `POST /api/modulos/imagenes` y usa la `url` devuelta.
   - Bloque `texto` con editor WYSIWYG (`src/componentes-comunes/editor-texto-enriquecido.tsx`, TipTap + `tiptap-markdown`, ver `DT-08`) que serializa a Markdown, según lo pedido explícitamente por el usuario (no Markdown crudo).
   - Dentro de `editar-modulo.page.tsx`: secciones para crear la actividad (`componentes/formulario-actividad.tsx`, `POST .../actividades`) y la evaluación (`componentes/formulario-evaluacion.tsx`, `POST .../evaluacion`, preguntas dinámicas de 2-5 opciones) del módulo.
-- [x] **Gestión de estudiantes** (RF-21/CU-11 + DT-08 del backend combinados, ver `DT-09` y `DT-10`): `gestion-estudiantes.page.tsx` (ruta `/administracion/estudiantes`). Campo manual de `idUsuario` (no existe endpoint de listado de usuarios) + selección de módulos por casillas (orden = orden de selección) → `POST /api/rutas`; sección separada de reseteo de contraseña con `BotonAccionCritica` → `PATCH /api/usuarios/:id/contrasena`.
+- [x] **Gestión de estudiantes** (RF-21/CU-11 + DT-08 del backend combinados, ver `DT-09` y `DT-10`): `gestion-estudiantes.page.tsx` (ruta `/administracion/estudiantes`). Campo manual de `idUsuario` (no existía endpoint de listado de usuarios; reemplazado por un selector en la Etapa 5b, `DT-20`) + selección de módulos por casillas (orden = orden de selección) → `POST /api/rutas`; sección separada de reseteo de contraseña con `BotonAccionCritica` → `PATCH /api/usuarios/:id/contrasena`.
 - [x] `ENLACES` en `barra-navegacion.tsx` extendido con "Módulos de aprendizaje" y "Gestión de estudiantes", visibles solo para `docente`. Nuevo bloque `GuardaRol` en `rutas.tsx`.
 - [x] Handlers de MSW por defecto para los 6 endpoints de `/api/modulos`, `/api/rutas` y `/api/usuarios` en `tests/mocks/handlers.ts`.
 - [x] Nuevas dependencias `react-markdown` (lectura de Markdown, `DT-07`) y `@tiptap/react` + `@tiptap/starter-kit` + `@tiptap/pm` + `tiptap-markdown` (editor WYSIWYG, `DT-08`), ambas justificadas en `docs/decisiones-tecnicas.md` (RNF-20).
 - [x] Verificación: incluida en la misma corrida de la Etapa 4 (`npm test`, `npm run test:coverage`, `npm run build`, `npm run lint` — todo en verde).
 - [x] Verificación manual con `npm run dev` contra el backend real (como docente) — confirmada por el usuario (2026-10-10).
 
-**Pendiente de la Etapa 5 (bloqueado por el backend):**
-
-- [ ] **Reportes** — RF-25, CU-15 (modo lectura también para investigador).
-- [ ] **Exportación** — RF-26, CU-16.
+Reportes y Exportación, que quedaron pendientes al cerrar esta etapa, se completaron en la Etapa 5b.
 
 ---
 
@@ -205,6 +203,38 @@ No es una etapa del plan original. Surgió a partir de mockups aportados por el 
 - [x] **Panel principal con datos** (`2d57459`): `panel-principal.page.tsx` compone `TarjetaMisServicios` (conteo por estado y hasta cinco servicios), `TarjetaRutaAprendizaje` (solo estudiante: progreso y "Continúa donde quedaste") y `TarjetaCapacidad` (comprometido frente al total), cada una con sus estados de carga, error y vacío.
 - [x] Verificación (2026-10-23): `npm test` (297 pruebas en 62 archivos, sin errores no capturados), `npm run test:coverage` (98.6% líneas/statements, 92.3% ramas, 93.6% funciones), `npm run build`, `npx tsc --noEmit` y `npm run lint` — todo en verde.
 - [x] Verificación manual con `npm run dev` contra el backend real — confirmada por el usuario (2026-10-23).
+
+---
+
+## Etapa 5b — Reportes, Exportación y listado de estudiantes (RF-21, RF-25, CU-11, CU-15, CU-16) — COMPLETA (`72a9287`, `5fc6c61`, `a42ceab`, `ed619bb`)
+
+El backend completó su Etapa 7 (DT-19 a DT-22 del backend): `GET /api/usuarios/estudiantes` (7.2), `GET /api/reportes/progreso` (8b.1) y `GET /api/reportes/progreso/exportar` (8b.2), todos exclusivos del docente. Aclaró además que el catálogo del diseño termina en RF-25 (no existe RF-26) y que el perfil investigador se descartó. Las decisiones de presentación se confirmaron con el usuario antes de implementar (`DT-18`), incluida la de seguir la línea visual de DT-17.
+
+- [x] **Documentación y tipos** (`72a9287`): contrato sincronizado, `CLAUDE.md` corregido (secciones 1 y 8), `DT-18` a `DT-20`, `src/tipos/reportes.ts`, `tests/fixtures/reporte.factory.ts` y handlers por defecto de MSW para los tres endpoints.
+- [x] **Gestión de estudiantes** (`5fc6c61`, `DT-20`, supera a `DT-09`):
+  - `CampoSelector` con `Nombre (correo)` poblado por `use-estudiantes.ts`, en lugar del campo manual de `idUsuario`.
+  - Ruta vigente del estudiante elegido con `ProgresoRutaEstudiante` (componente nuevo, compartido con Reportes).
+  - La vista se reorganizó en tarjetas con la línea visual de DT-17, y sus textos llevan tildes y eñes.
+  - `useAsignarRuta` invalida el listado y el reporte.
+- [x] **Reportes** (`a42ceab`, `DT-18`): `reportes.page.tsx` (ruta `/administracion/reportes`, solo `docente`).
+  - Selector "Todos los estudiantes / un estudiante" guardado en la URL (`?idUsuario=N`).
+  - Con "Todos": `ListaProgresoEstudiantes` y `TarjetaResumenGrupo` con datos de 7.2 (`utilidades/resumen-grupo.ts`).
+  - Con un estudiante: `DetalleProgresoEstudiante` con datos de 8b.1 (`use-reporte-progreso.ts`). Muestra por módulo el estado, las actividades, la mejor nota, los intentos y si aprobó.
+  - Enlace "Reportes" en la categoría Administración de la barra lateral.
+  - `InsigniaEstadoModulo` pasó a los tonos suaves de DT-17, que cumplen el contraste AA. También cambió su aspecto en Mi ruta.
+- [x] **Exportación** (`ed619bb`, `DT-19`):
+  - `AccionesExportacion` descarga en CSV o PDF lo que se está consultando, con `use-exportar-reporte.ts` (`responseType: "blob"`).
+  - El nombre del archivo sale de `Content-Disposition` (`src/utilidades/descarga-archivo.ts`).
+  - Los errores se leen del JSON dentro del `Blob` (`normalizarErrorApiDescarga`).
+  - `Boton` admite un icono decorativo.
+  - Prueba de integración: `tests/integracion/modulos/administracion/consultar-y-exportar-reporte.test.tsx`.
+- [x] Verificación (2026-10-23): `npm test` (332 pruebas en 66 archivos, sin errores no capturados), `npm run test:coverage` (98.8% líneas/statements, 92.8% ramas, 94.5% funciones), `npx tsc --noEmit`, `npm run build` y `npm run lint`, todo en verde.
+- [ ] **Verificación manual** con `npm run dev` contra el backend real (usuario):
+  - Como docente, en Gestión de estudiantes: elegir un estudiante, asignarle una ruta y ver la ruta vigente actualizada.
+  - Como docente, en Reportes: "Todos", un estudiante concreto y el regreso a todos.
+  - Exportar CSV (abrirlo en Excel y revisar tildes y eñes) y PDF, con y sin filtro, y revisar el nombre propuesto del archivo.
+  - Como estudiante: no aparece "Reportes" y `/administracion/reportes` redirige al panel. La insignia de estado de Mi ruta se ve con los tonos suaves.
+  - Revisión visual de las tres vistas junto al panel principal, también en ancho de móvil.
 
 ---
 
