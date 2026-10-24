@@ -16,9 +16,9 @@
 | Etapa 5 — Módulo Administración (módulos y estudiantes) | Completa | `5d08be3` |
 | Mejora transversal — Configuración avanzada de servicios y nuevo ciclo de vida de contenedores (DT-13 a DT-16) | Completa | `d315318` |
 | Mejora transversal — Estado visual de actividades, barra lateral por categorías y panel principal con datos (DT-17) | Completa | `5317f9f`, `29a626e`, `1373b2d`, `b39a284`, `2d57459` |
-| Etapa 5b — Reportes, Exportación y listado de estudiantes (RF-25, CU-15, CU-16, DT-18 a DT-20) | Completa; pendiente la verificación manual del usuario | `72a9287`, `5fc6c61`, `a42ceab`, `ed619bb` |
+| Etapa 5b — Reportes, Exportación y listado de estudiantes (RF-25, CU-15, CU-16, DT-18 a DT-20) | Completa | `72a9287`, `5fc6c61`, `a42ceab`, `ed619bb` |
 
-**Próximo paso concreto (actualizado 2026-10-23):** el backend completó su Etapa 7 (`/api/reportes` y `GET /api/usuarios/estudiantes`, secciones 7.2 y 8b de `docs/contrato-api.md`) y el frontend ya la integra en la Etapa 5b: vista de Reportes con exportación en CSV o PDF y selector de estudiantes en Gestión de estudiantes. Con esto, todo el catálogo de RF del diseño (RF-01 a RF-25; no existe RF-26) tiene su vista. Falta la **verificación manual del usuario** de la Etapa 5b con `npm run dev` contra el backend real (ver la lista al final de la sección de la Etapa 5b). Si aparecen hallazgos, se corrigen con el mismo procedimiento TDD.
+**Próximo paso concreto (actualizado 2026-10-23):** el backend completó su Etapa 7 (`/api/reportes` y `GET /api/usuarios/estudiantes`, secciones 7.2 y 8b de `docs/contrato-api.md`) y el frontend ya la integra en la Etapa 5b: vista de Reportes con exportación en CSV o PDF y selector de estudiantes en Gestión de estudiantes. Con esto, todo el catálogo de RF del diseño (RF-01 a RF-25; no existe RF-26) tiene su vista. La Etapa 5b quedó verificada manualmente por el usuario contra el backend real (2026-10-23). En el frontend no queda trabajo del catálogo pendiente; solo los puntos bloqueados por el backend y las mejoras opcionales de abajo.
 
 Pendientes que siguen bloqueados por el backend: edición de perfil (RF-04, ver `DT-03`) y la comparación exacta de `imagenDocker` en la evaluación de actividades (ver `DT-14`). El listado de usuarios de `DT-09` ya está resuelto (`DT-20`).
 
@@ -229,7 +229,7 @@ El backend completó su Etapa 7 (DT-19 a DT-22 del backend): `GET /api/usuarios/
   - `Boton` admite un icono decorativo.
   - Prueba de integración: `tests/integracion/modulos/administracion/consultar-y-exportar-reporte.test.tsx`.
 - [x] Verificación (2026-10-23): `npm test` (332 pruebas en 66 archivos, sin errores no capturados), `npm run test:coverage` (98.8% líneas/statements, 92.8% ramas, 94.5% funciones), `npx tsc --noEmit`, `npm run build` y `npm run lint`, todo en verde.
-- [ ] **Verificación manual** con `npm run dev` contra el backend real (usuario):
+- [x] **Verificación manual** con `npm run dev` contra el backend real, confirmada por el usuario (2026-10-23):
   - Como docente, en Gestión de estudiantes: elegir un estudiante, asignarle una ruta y ver la ruta vigente actualizada.
   - Como docente, en Reportes: "Todos", un estudiante concreto y el regreso a todos.
   - Exportar CSV (abrirlo en Excel y revisar tildes y eñes) y PDF, con y sin filtro, y revisar el nombre propuesto del archivo.
